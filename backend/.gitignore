@@ -1,0 +1,37 @@
+# ── .NET Build Output ─────────────────────────────────
+bin/
+obj/
+out/
+
+# ── .NET Specific ─────────────────────────────────────
+*.user
+*.suo
+.vs/
+*.rsuser
+.localhistory/
+
+# ── NuGet ─────────────────────────────────────────────
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!**/packages/build/
+
+# ── Secrets — NEVER commit these ──────────────────────
+appsettings.Development.json
+appsettings.Production.json
+*.pfx
+*.p12
+secrets.json
+
+# ── EF Core Migrations (keep these) ───────────────────
+# DO NOT ignore migrations folder
+# Migrations are part of source code
+
+# ── Test Results ──────────────────────────────────────
+TestResults/
+*.trx
+*.coverage
+
+# ── Publish Output ────────────────────────────────────
+publish/

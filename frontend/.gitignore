@@ -1,0 +1,36 @@
+# ── Dependencies ──────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build Output ──────────────────────────────────────
+dist/
+dist-ssr/
+build/
+*.local
+
+# ── Environment Files — NEVER commit these ────────────
+.env
+.env.local
+.env.development.local
+.env.production.local
+.env.test.local
+
+# Keep these (they have no secrets):
+# .env.development  ← commit karo (no secrets)
+# .env.production   ← commit karo (no secrets)
+
+# ── Logs ──────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── Cache ─────────────────────────────────────────────
+.cache/
+.parcel-cache/
+.vite/
+
+# ── TypeScript ────────────────────────────────────────
+*.tsbuildinfo
