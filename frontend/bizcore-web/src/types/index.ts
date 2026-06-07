@@ -106,3 +106,40 @@ export interface UpdateUserRequest {
   lastName:  string;
   email:     string;
 }
+
+// ── Company Types ─────────────────────────────────────
+
+export interface CompanyResponse {
+  id:           string;
+  name:         string;
+  slug:         string;
+  logoUrl?:     string;
+  subscription: string;
+  isActive:     boolean;
+  totalUsers:   number;
+  activeUsers:  number;
+  createdAt:    string;
+  updatedAt:    string | null;
+}
+
+export interface PlatformStats {
+  totalCompanies:  number;
+  activeCompanies: number;
+  trialCompanies:  number;
+  totalUsers:      number;
+  activeUsers:     number;
+}
+
+export interface CreateCompanyRequest {
+  name:           string;
+  adminFirstName: string;
+  adminLastName:  string;
+  adminEmail:     string;
+  adminPassword:  string;
+  subscription:   string;
+}
+
+export interface UpdateCompanyRequest {
+  name:         string;
+  subscription: string;
+}

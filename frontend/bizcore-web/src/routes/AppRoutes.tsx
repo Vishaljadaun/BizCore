@@ -15,6 +15,17 @@ const UserManagementPage = lazy(
   () => import('../modules/users/UserManagementPage')
 );
 
+// Add lazy imports:
+const CompaniesPage       = lazy(
+  () => import('../modules/companies/CompaniesPage'));
+
+const SuperAdminDashboard = lazy(
+  () => import('../modules/dashboard/SuperAdminDashboard'));
+
+const CompanyDetailPage = lazy(
+  () => import('../modules/companies/CompanyDetailPage')
+);
+
 // Temporary placeholder for modules not yet built
 const ComingSoon = ({ title }: { title: string }) => (
   <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
@@ -112,6 +123,20 @@ const AppRoutes = () => {
     element={<UserManagementPage />}
     // Real page now — not ComingSoon
   />
+// Routes mein add karo (SuperAdmin only section):
+<Route element={<ProtectedRoute
+  allowedRoles={[UserRole.SuperAdmin]} />
+}>
+  <Route
+    path="/companies"
+    element={<CompaniesPage />}
+  />
+  <Route
+    path="/companies/:id"
+    element={<CompanyDetailPage />}
+  />
+</Route>
+
             </Route>
 
           </Route>

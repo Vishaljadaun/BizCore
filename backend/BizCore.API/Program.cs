@@ -20,7 +20,7 @@ builder.Services.AddControllers()
           new JsonStringEnumConverter()
       );
       // Ab "Employee" string directly enum mein convert hoga
-      // Frontend ko integer bhejne ki zarurat nahi
+      // Frontend ko integer bhejne ki zarurat nahi hai
   });
 
 builder.Services.AddEndpointsApiExplorer();

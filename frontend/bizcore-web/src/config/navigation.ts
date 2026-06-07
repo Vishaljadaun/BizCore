@@ -188,6 +188,16 @@ export const navigation: NavItem[] = [
     icon:  '⚙️',
     roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin],
   },
+
+  // Navigation array mein add karo (SuperAdmin only):
+{
+  label: 'Companies',
+  path:  '/companies',
+  icon:  '🏢',
+  roles: [UserRole.SuperAdmin],
+  // Sirf SuperAdmin ko dikhega
+},
+
 ];
 
 // Separate navigation for Vendor portal

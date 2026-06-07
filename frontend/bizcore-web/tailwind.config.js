@@ -1,22 +1,32 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  // Tell Tailwind where your components are
-  // so it only includes CSS classes you actually use
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class',
+  // 'class' = dark mode activates when <html> has class="dark"
+  // We toggle this via themeStore
   theme: {
     extend: {
-      // BizCore brand colors — used as: bg-primary, text-primary
       colors: {
         primary: {
           50:  '#eff6ff',
+          100: '#dbeafe',
           500: '#3b82f6',
           600: '#2563eb',
           700: '#1d4ed8',
         }
-      }
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.15s ease-out',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%':   { opacity: '0', transform: 'translateY(-4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
     },
   },
   plugins: [],
