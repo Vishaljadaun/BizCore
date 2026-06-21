@@ -14,5 +14,7 @@ namespace BizCore.Application.Common.Interfaces
         Guid? CompanyId { get; }    // The tenant key
         string? UserRole { get; }
         string? IpAddress { get; }
+
+        Guid? EmployeeId { get; }
     }
 }

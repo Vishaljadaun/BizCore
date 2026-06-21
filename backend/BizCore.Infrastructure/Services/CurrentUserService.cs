@@ -45,5 +45,17 @@ namespace BizCore.Infrastructure.Services
         public string? IpAddress =>
             _httpContextAccessor.HttpContext?
                 .Connection.RemoteIpAddress?.ToString();
+
+        public Guid? EmployeeId
+        {
+            get
+            {
+                var value = _httpContextAccessor.HttpContext?
+                    .User.FindFirstValue("employee_id");
+                // "employee_id" claim JWT mein hoga
+                return Guid.TryParse(value, out var id)
+                    ? id : null;
+            }
+        }
     }
 }

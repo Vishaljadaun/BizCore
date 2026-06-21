@@ -22,6 +22,10 @@ namespace BizCore.Domain.Entities
         public bool IsActive { get; set; } = true;
         public DateTime? LastLogin { get; set; }
 
+        // ── New: Link to HR Employee profile ──────────────
+        public Guid? EmployeeId { get; set; }
+        // Nullable: SuperAdmin, pure admins don't have HR profile
+
         // Navigation property — who created this user
         public Company Company { get; set; } = null!;
 

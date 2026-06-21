@@ -3,17 +3,20 @@ using System;
 using BizCore.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace BizCore.Infrastructure.Migrations
+namespace BizCore.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(BizCoreDbContext))]
-    partial class BizCoreDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260607162237_HRModule")]
+    partial class HRModule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -525,9 +528,6 @@ namespace BizCore.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)");
-
-                    b.Property<Guid?>("EmployeeId")
-                        .HasColumnType("uuid");
 
                     b.Property<string>("FirstName")
                         .IsRequired()

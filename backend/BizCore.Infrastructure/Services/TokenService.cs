@@ -31,23 +31,31 @@ namespace BizCore.Infrastructure.Services
             var credentials = new SigningCredentials(
                 key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
-            new Claim(JwtRegisteredClaimNames.Sub,
-                user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email,
-                user.Email),
-            new Claim(JwtRegisteredClaimNames.Jti,
-                Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.NameIdentifier,
-                user.Id.ToString()),
-            new Claim(ClaimTypes.Role,
-                user.Role.ToString()),
-            new Claim("company_id",
-                user.CompanyId.ToString()),
-            new Claim("first_name", user.FirstName),
-            new Claim("last_name", user.LastName),
-        };
+                new Claim(JwtRegisteredClaimNames.Sub,
+                    user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email,
+                    user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti,
+                    Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.NameIdentifier,
+                    user.Id.ToString()),
+                new Claim(ClaimTypes.Role,
+                    user.Role.ToString()),
+                new Claim("company_id",
+                    user.CompanyId.ToString()),
+                new Claim("first_name", user.FirstName),
+                new Claim("last_name", user.LastName),
+            };
+
+            // Employee ID add karo if linked
+            if (user.EmployeeId.HasValue)
+            {
+                claims.Add(new Claim(
+                    "employee_id",
+                    user.EmployeeId.Value.ToString()));
+            }
 
             var expiryMinutes = int.Parse(
                 jwtSettings["AccessTokenExpiryMinutes"] ?? "15");

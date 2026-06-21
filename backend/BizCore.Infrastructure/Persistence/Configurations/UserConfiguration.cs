@@ -93,6 +93,9 @@ namespace BizCore.Infrastructure.Persistence.Configurations
             // Without this index: "get all users of company X"
             // = full table scan across ALL companies' users
             // With this index: instant lookup. Critical for multi-tenancy.
+
+            builder.Property(u => u.EmployeeId)
+    .IsRequired(false);
         }
     }
 }

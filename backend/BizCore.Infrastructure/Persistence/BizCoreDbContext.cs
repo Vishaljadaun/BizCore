@@ -1,6 +1,7 @@
 ﻿using BizCore.Application.Common.Interfaces;
 using BizCore.Domain.Common;
 using BizCore.Domain.Entities;
+using BizCore.Domain.Entities.HR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
@@ -26,6 +27,14 @@ namespace BizCore.Infrastructure.Persistence
         public DbSet<User> Users => Set<User>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+        // ── HR Module ─────────────────────────────────────────
+        public DbSet<Department> Departments => Set<Department>();
+        public DbSet<Employee> Employees => Set<Employee>();
+        public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
+        public DbSet<LeaveBalance> LeaveBalances => Set<LeaveBalance>();
+        public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+        public DbSet<Attendance> Attendances => Set<Attendance>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
