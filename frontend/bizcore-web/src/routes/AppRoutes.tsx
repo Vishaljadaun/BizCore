@@ -10,20 +10,23 @@ const LoginPage      = lazy(() => import('../modules/auth/LoginPage'));
 const RegisterPage   = lazy(() => import('../modules/auth/RegisterPage'));
 const AppLayout      = lazy(() => import('../components/layout/AppLayout'));
 const DashboardPage  = lazy(() => import('../modules/dashboard/DashboardPage'));
-// Add this lazy import at top:
-const UserManagementPage = lazy(
-  () => import('../modules/users/UserManagementPage')
-);
 
-// Add lazy imports:
-const CompaniesPage       = lazy(
-  () => import('../modules/companies/CompaniesPage'));
+// Admin & SuperAdmin Imports
+const UserManagementPage = lazy(() => import('../modules/users/UserManagementPage'));
+const CompaniesPage      = lazy(() => import('../modules/companies/CompaniesPage'));
+const CompanyDetailPage  = lazy(() => import('../modules/companies/CompanyDetailPage'));
 
-const SuperAdminDashboard = lazy(
-  () => import('../modules/dashboard/SuperAdminDashboard'));
+// Optional: If you plan to use SuperAdminDashboard later, keep this. 
+// Otherwise you can remove it if DashboardPage handles logic based on role.
+const SuperAdminDashboard = lazy(() => import('../modules/dashboard/SuperAdminDashboard'));
 
-const CompanyDetailPage = lazy(
-  () => import('../modules/companies/CompanyDetailPage')
+// HR Module Imports
+const DepartmentsPage      = lazy(() => import('../modules/hr/departments/DepartmentsPage'));
+const EmployeesPage        = lazy(() => import('../modules/hr/employees/EmployeesPage'));
+const LeaveManagementPage  = lazy(() => import('../modules/hr/leaves/LeaveManagementPage'));
+const AttendancePage       = lazy(() => import('../modules/hr/attendance/AttendancePage'));
+const MyProfilePage = lazy(
+  () => import('../modules/hr/employees/MyProfilePage')
 );
 
 // Temporary placeholder for modules not yet built
@@ -69,14 +72,46 @@ const AppRoutes = () => {
             {/* Dashboard — all authenticated roles */}
             <Route path="/dashboard" element={<DashboardPage />} />
 
+            {/* ── HR MODULE ─────────────────────────────────────────── */}
+            
             {/* HR — Managers and above */}
             <Route element={<ProtectedRoute allowedRoles={[
               UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager
             ]} />}>
-              <Route path="/hr/employees" element={<ComingSoon title="Employees" />} />
-              <Route path="/hr/leaves"    element={<ComingSoon title="Leave Management" />} />
-              <Route path="/hr/attendance" element={<ComingSoon title="Attendance" />} />
+              <Route path="/hr/employees"  element={<EmployeesPage />} />
+              <Route path="/hr/leaves"     element={<LeaveManagementPage />} />
+              <Route path="/hr/attendance" element={<AttendancePage />} />
+              <Route
+  path="/my-profile"
+  element={<MyProfilePage />}
+/>
             </Route>
+
+            {/* HR Departments — Admins only */}
+            <Route element={<ProtectedRoute allowedRoles={[
+              UserRole.SuperAdmin, UserRole.CompanyAdmin
+            ]} />}>
+              <Route path="/hr/departments" element={<DepartmentsPage />} />
+            </Route>
+
+
+            {/* ── COMPANY & USER MANAGEMENT ─────────────────────────── */}
+
+            {/* Companies — SuperAdmin only */}
+            <Route element={<ProtectedRoute allowedRoles={[UserRole.SuperAdmin]} />}>
+              <Route path="/companies"     element={<CompaniesPage />} />
+              <Route path="/companies/:id" element={<CompanyDetailPage />} />
+            </Route>
+
+            {/* User Management — Admins only */}
+            <Route element={<ProtectedRoute allowedRoles={[
+              UserRole.SuperAdmin, UserRole.CompanyAdmin
+            ]} />}>
+              <Route path="/users" element={<UserManagementPage />} />
+            </Route>
+
+
+            {/* ── COMING SOON MODULES ───────────────────────────────── */}
 
             {/* Projects — Employees and above */}
             <Route element={<ProtectedRoute allowedRoles={[
@@ -112,31 +147,6 @@ const AppRoutes = () => {
               <Route path="/finance/invoices" element={<ComingSoon title="Invoices" />} />
               <Route path="/finance/expenses" element={<ComingSoon title="Expenses" />} />
               <Route path="/finance/reports"  element={<ComingSoon title="Reports" />} />
-            </Route>
-
-            {/* User Management — Admins only */}
-            <Route element={<ProtectedRoute allowedRoles={[
-              UserRole.SuperAdmin, UserRole.CompanyAdmin
-            ]} />}>
-              <Route
-    path="/users"
-    element={<UserManagementPage />}
-    // Real page now — not ComingSoon
-  />
-// Routes mein add karo (SuperAdmin only section):
-<Route element={<ProtectedRoute
-  allowedRoles={[UserRole.SuperAdmin]} />
-}>
-  <Route
-    path="/companies"
-    element={<CompaniesPage />}
-  />
-  <Route
-    path="/companies/:id"
-    element={<CompanyDetailPage />}
-  />
-</Route>
-
             </Route>
 
           </Route>

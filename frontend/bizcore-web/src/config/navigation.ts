@@ -29,33 +29,58 @@ export const navigation: NavItem[] = [
   },
 
   // ── HR Module ────────────────────────────────────────────────────────────
-  {
-    label: 'HR Module',
-    path:  '/hr',
-    icon:  '👥',
-    // Employees cannot access HR management
-    roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
-    children: [
-      {
-        label: 'Employees',
-        path:  '/hr/employees',
-        icon:  '👤',
-        roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
-      },
-      {
-        label: 'Leave Management',
-        path:  '/hr/leaves',
-        icon:  '🏖️',
-        roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
-      },
-      {
-        label: 'Attendance',
-        path:  '/hr/attendance',
-        icon:  '⏰',
-        roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
-      },
-    ],
-  },
+ // HR Module children mein departments add karo:
+{
+  label: 'HR Module',
+  path:  '/hr',
+  icon:  '👥',
+  roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
+  children: [
+    {
+      label: 'Departments',
+      path:  '/hr/departments',
+      icon:  '🏢',
+      roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin],
+    },
+    {
+      label: 'Employees',
+      path:  '/hr/employees',
+      icon:  '👤',
+      roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
+    },
+    {
+      label: 'Leave Management',
+      path:  '/hr/leaves',
+      icon:  '🏖️',
+      roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
+    },
+    {
+      label: 'Attendance',
+      path:  '/hr/attendance',
+      icon:  '⏰',
+      roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
+    },
+    
+{
+  label: 'My Profile',
+  path:  '/my-profile',
+  icon:  '👤',
+  roles: [
+    UserRole.SuperAdmin,
+    UserRole.CompanyAdmin,
+    UserRole.Manager,
+    UserRole.Employee,
+  ],
+},
+
+
+  ],
+},
+
+
+
+
+  
 
   // ── Projects Module ───────────────────────────────────────────────────────
   {
@@ -197,6 +222,8 @@ export const navigation: NavItem[] = [
   roles: [UserRole.SuperAdmin],
   // Sirf SuperAdmin ko dikhega
 },
+
+
 
 ];
 

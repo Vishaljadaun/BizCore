@@ -16,7 +16,7 @@ export enum UserRole {
 // ── Entity Interfaces ─────────────────────────────────────────────────────────
 
 export interface User {
-  id:          string;   // UUID from .NET — comes as string in JSON
+  id:          string;
   firstName:   string;
   lastName:    string;
   email:       string;
@@ -24,6 +24,8 @@ export interface User {
   isActive:    boolean;
   companyId:   string;
   companyName: string;
+  employeeId?: string | null;
+  // ↑ New: linked employee ID from JWT
 }
 
 export interface Company {
@@ -142,4 +144,104 @@ export interface CreateCompanyRequest {
 export interface UpdateCompanyRequest {
   name:         string;
   subscription: string;
+}
+
+
+// ── HR Types ──────────────────────────────────────────
+
+export interface DepartmentResponse {
+  id:             string;
+  name:           string;
+  description:    string | null;
+  managerId:      string | null;
+  managerName:    string | null;
+  totalEmployees: number;
+  isActive:       boolean;
+  createdAt:      string;
+}
+
+export interface EmployeeResponse {
+  id:             string;
+  employeeCode:   string;
+  firstName:      string;
+  lastName:       string;
+  fullName:       string;
+  email:          string;
+  phone:          string | null;
+  designation:    string;
+  departmentId:   string;
+  departmentName: string;
+  joiningDate:    string;
+  salary:         number;
+  isActive:       boolean;
+  userId:         string | null;
+  createdAt:      string;
+}
+
+export interface LeaveTypeResponse {
+  id:          string;
+  name:        string;
+  daysAllowed: number;
+  isActive:    boolean;
+}
+
+export interface LeaveBalanceResponse {
+  leaveTypeId:   string;
+  leaveTypeName: string;
+  totalDays:     number;
+  usedDays:      number;
+  remainingDays: number;
+  year:          number;
+}
+
+export interface LeaveRequestResponse {
+  id:              string;
+  employeeId:      string;
+  employeeName:    string;
+  leaveTypeName:   string;
+  startDate:       string;
+  endDate:         string;
+  totalDays:       number;
+  reason:          string;
+  status:          string;
+  approvedByName:  string | null;
+  approvedAt:      string | null;
+  rejectionReason: string | null;
+  createdAt:       string;
+}
+
+export interface AttendanceResponse {
+  id:           string;
+  employeeId:   string;
+  employeeName: string;
+  date:         string;
+  clockIn:      string;
+  clockOut:     string | null;
+  workingHours: number | null;
+  status:       string;
+  notes:        string | null;
+}
+
+export interface CreateDepartmentRequest {
+  name:        string;
+  description: string | null;
+}
+
+export interface CreateEmployeeRequest {
+  firstName:    string;
+  lastName:     string;
+  email:        string;
+  phone?:       string;
+  designation:  string;
+  departmentId: string;
+  joiningDate:  string;
+  salary:       number;
+  userId?:      string;
+}
+
+export interface ApplyLeaveRequest {
+  leaveTypeId: string;
+  startDate:   string;
+  endDate:     string;
+  reason:      string;
 }
