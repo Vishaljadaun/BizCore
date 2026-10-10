@@ -1,0 +1,40 @@
+# Reproducible deployment template. Existing services are created through the
+# Render connector; do not apply this again unless creating a separate environment.
+services:
+  - type: web
+    name: bizcore-api
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: JwtSettings__SecretKey
+        generateValue: true
+      - key: Cors__AllowedOrigins__0
+        sync: false
+      - key: Seed__Enabled
+        value: "false"
+  - type: web
+    name: bizcore-web
+    runtime: static
+    branch: main
+    buildCommand: cd frontend/bizcore-web && npm ci && npm run build
+    staticPublishPath: frontend/bizcore-web/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      - key: VITE_API_BASE_URL
+        sync: false
+      - key: VITE_USE_HASH_ROUTER
+        value: "true"
+      - key: VITE_API_TIMEOUT_MS
+        value: "120000"

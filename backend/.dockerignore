@@ -1,0 +1,9 @@
+**/bin
+**/obj
+**/.vs
+**/.git
+**/.env*
+**/*.user
+**/*.log
+**/TestResults
+BizCore.Tests
