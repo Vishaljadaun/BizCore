@@ -1,4 +1,4 @@
-﻿using BizCore.API.Middleware;
+using BizCore.API.Middleware;
 using BizCore.Application;
 using BizCore.Infrastructure;
 using BizCore.Infrastructure.Persistence;
@@ -64,20 +64,18 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// CORS
+// Allow only explicitly configured frontend origins in a hosted environment.
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? (builder.Environment.IsDevelopment()
+        ? new[] { "http://localhost:5173", "http://localhost:5174", "http://localhost:5175" }
+        : Array.Empty<string>());
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("BizCoreFrontend", policy =>
     {
-        policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:5175"   // ← Yeh add karo
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        if (allowedOrigins.Length > 0)
+            policy.WithOrigins(allowedOrigins)
+                .AllowAnyHeader().AllowAnyMethod().AllowCredentials();
     });
 });
 
@@ -97,10 +95,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseCors("BizCoreFrontend");
-app.UseHttpsRedirection();
+// Render terminates HTTPS at its edge; internal container traffic is HTTP.
+if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseAuthentication();   // JWT token read karo
 app.UseAuthorization();    // Permissions check karo
 app.MapControllers();
+// Startup completes only after database migrations succeed.
+app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
 // ── Database Seed ─────────────────────────────────────
 using (var scope = app.Services.CreateScope())

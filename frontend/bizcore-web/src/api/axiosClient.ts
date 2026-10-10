@@ -3,9 +3,12 @@ import { useAuthStore } from '../store/authStore';
 import type { AuthResponse } from '../types';
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
-const axiosClient = axios.create({ baseURL, timeout: 30000 });
+const configuredTimeout = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 30000);
+const timeout = Number.isFinite(configuredTimeout) && configuredTimeout > 0
+  ? Math.min(configuredTimeout, 120000) : 30000;
+const axiosClient = axios.create({ baseURL, timeout });
 // A separate client prevents failed refreshes from entering the interceptor again.
-const tokenClient = axios.create({ baseURL, timeout: 30000 });
+const tokenClient = axios.create({ baseURL, timeout });
 type RetryRequest = InternalAxiosRequestConfig & { _retry?: boolean; _sessionRevision?: number };
 let refreshing: { token: string; promise: Promise<string> } | null = null;
 
