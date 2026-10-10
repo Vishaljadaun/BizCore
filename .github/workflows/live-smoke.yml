@@ -1,0 +1,17 @@
+name: Check live portfolio deployment
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/bizcore-live-docs]
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/check-live-deployment.py

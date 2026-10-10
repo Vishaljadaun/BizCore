@@ -4,6 +4,12 @@ BizCore is a .NET and React portfolio project for managing companies, users, and
 
 [![Build and test](https://github.com/Vishaljadaun/BizCore/actions/workflows/ci.yml/badge.svg)](https://github.com/Vishaljadaun/BizCore/actions/workflows/ci.yml)
 
+## Live portfolio preview
+
+Open **[BizCore](https://bizcore-web.onrender.com/#/login)** on your phone or computer. Choose **Register your company** to create your own administrator account, then follow [the employee testing guide](docs/TESTING.md). The frontend and API run on Render, with persistent PostgreSQL storage on Neon. The free API may take about a minute to wake after inactivity.
+
+See [deployment configuration](docs/DEPLOYMENT.md). This preview includes the working features below; unfinished modules remain unfinished.
+
 ## Current scope
 
 | Area | Status |
@@ -96,7 +102,7 @@ Start the API once, then disable `Seed:Enabled`. The seeder does not reset an ex
 
 `VITE_API_BASE_URL` is a public frontend value. Database credentials and signing keys must never be frontend environment variables.
 
-The current API CORS allowlist covers local Vite origins on ports 5173–5175. Hosted CORS configuration, Docker deployment, migration smoke checks, and production onboarding are a future milestone. Do not treat a successful frontend build as a deployed ERP.
+Local development permits Vite origins on ports 5173–5175. Hosted CORS origins come from `Cors__AllowedOrigins__0` (and subsequent indices). The deployment uses Docker, a separate static frontend and Neon; see [DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Verification
 

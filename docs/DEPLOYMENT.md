@@ -1,5 +1,8 @@
 # Hosted BizCore
 
+- Frontend: **https://bizcore-web.onrender.com/#/login**
+- API health: **https://bizcore-api-e7is.onrender.com/health**
+
 The portfolio deployment uses a Render static site for React, a free Render
 Docker web service for the .NET 8 API, and a separate PostgreSQL 16 project on
 Neon. API and database are in Singapore. Existing PulseBoard resources are not
@@ -70,3 +73,7 @@ the placeholder modules listed in [COMPLETION.md](COMPLETION.md) remain unfinish
 Both Render services track `main` and deploy new commits automatically. Check
 GitHub Actions and the service deploy logs after merging a change. Keep the JWT
 key and database configuration unchanged across routine deployments.
+
+## Manual live verification
+
+The **Check live portfolio deployment** GitHub Actions workflow runs on demand. It checks public frontend delivery, API health, CORS, registration, employee linking, attendance and revocation. Each run creates one clearly named fictional `Deployment Check` company in the hosted database; it does not delete records or use real customer data. The regular CI browser workflow still uses its own disposable PostgreSQL database.
