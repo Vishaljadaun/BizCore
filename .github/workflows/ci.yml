@@ -36,3 +36,46 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: bizcore_e2e
+          POSTGRES_USER: bizcore_e2e
+          POSTGRES_PASSWORD: local-e2e-only
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U bizcore_e2e -d bizcore_e2e"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/bizcore-web/package-lock.json
+      - run: dotnet build backend/BizCore.sln --configuration Release
+      - run: npm ci
+        working-directory: frontend/bizcore-web
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend/bizcore-web
+      - run: npm run test:e2e
+        working-directory: frontend/bizcore-web
+      - name: Restart API and repeat against the existing schema
+        run: npm run test:e2e
+        working-directory: frontend/bizcore-web
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-test-report
+          path: |
+            frontend/bizcore-web/playwright-report/
+            frontend/bizcore-web/test-results/
+          retention-days: 7

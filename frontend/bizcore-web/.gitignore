@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright reports may contain disposable test-session tokens.
+playwright-report/
+test-results/

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 
 type InputProps = {
   label?      : string;
@@ -7,11 +7,17 @@ type InputProps = {
 } & React.InputHTMLAttributes<HTMLInputElement>;
 
 const Input = ({ label, error, helperText, ...rest }: InputProps) => {
+  const generatedId = useId();
+  const inputId = rest.id ?? generatedId;
+  const messageId = `${inputId}-message`;
+  const describedBy = [rest['aria-describedby'], (error || helperText) ? messageId : undefined]
+    .filter(Boolean).join(' ') || undefined;
+
   return (
     <div className="flex flex-col gap-1">
 
       {label && (
-        <label className="text-sm font-medium
+        <label htmlFor={inputId} className="text-sm font-medium
           text-gray-700 dark:text-slate-400">
           {label}
         </label>
@@ -30,16 +36,19 @@ const Input = ({ label, error, helperText, ...rest }: InputProps) => {
           }
         `}
         {...rest}
+        id={inputId}
+        aria-invalid={error ? true : rest['aria-invalid']}
+        aria-describedby={describedBy}
       />
 
       {helperText && !error && (
-        <p className="text-xs text-gray-500 dark:text-slate-500 mt-0.5">
+        <p id={messageId} className="text-xs text-gray-500 dark:text-slate-500 mt-0.5">
           {helperText}
         </p>
       )}
 
       {error && (
-        <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">
+        <p id={messageId} className="text-xs text-red-500 dark:text-red-400 mt-0.5">
           {error}
         </p>
       )}

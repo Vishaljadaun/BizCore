@@ -1,0 +1,15 @@
+# Disposable test database only. These credentials must never be used in production.
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: bizcore_e2e
+      POSTGRES_USER: bizcore_e2e
+      POSTGRES_PASSWORD: local-e2e-only
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bizcore_e2e -d bizcore_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
