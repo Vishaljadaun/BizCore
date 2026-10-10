@@ -1,6 +1,6 @@
 # Try BizCore yourself
 
-BizCore currently runs locally. This repository does not include a confirmed public deployment URL. A passing GitHub Actions run verifies the code; it does not publish the app.
+Try the hosted app at **https://bizcore-web.onrender.com/#/login**. Choose **Register your company**, then follow the employee workflow in section 2. You can do this from your phone without installing anything. The free API can take about a minute to wake after inactivity. Local setup is also available below.
 
 ## 1. Start the app on a computer
 
@@ -82,7 +82,7 @@ The browser report is attached as `browser-test-report`. Failure traces can incl
 
 The second browser run verifies that startup migrations can be applied again safely. It creates new test records; it does not replace the manual check of old records after restart.
 
-Opening `localhost` on your phone refers to the phone, not your computer. To try the app conveniently from a phone outside your computer's local setup, we still need to deploy BizCore's frontend, API and database.
+Opening `localhost` on your phone refers to the phone, not your computer. Use **https://bizcore-web.onrender.com/#/login** for the hosted version instead.
 
 ## What is outside this test
 
