@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isAxiosError } from 'axios';
 import { hrApi }     from '../../../api/hrApi';
 import type {
   AttendanceResponse,
@@ -30,16 +31,19 @@ const AttendancePage = () => {
   const [clockingId,  setClockingId]  =
     useState<string | null>(null);
 
+  const [error, setError] = useState<string | null>(null);
+
   // Fetch employees for filter
   useEffect(() => {
     hrApi.getEmployees({ pageSize: 100 })
       .then(res => setEmployees(res.items))
-      .catch(() => {});
+      .catch(() => setError('Unable to load employees. Please refresh and try again.'));
   }, []);
 
   const fetchAttendance = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const result = await hrApi.getAttendance({
         employeeId: empFilter  || undefined,
         date:       dateFilter || undefined,
@@ -48,21 +52,26 @@ const AttendancePage = () => {
       });
       setData(result);
     } catch {
-      // Handle error
+      setError('Unable to load attendance. Please retry.');
     } finally {
       setIsLoading(false);
     }
   }, [empFilter, dateFilter, page]);
 
   useEffect(() => {
-    fetchAttendance();
+    // This effect starts an external request and exposes its loading state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchAttendance();
   }, [fetchAttendance]);
 
   const handleClockIn = async (employeeId: string) => {
     try {
       setClockingId(employeeId);
+      setError(null);
       await hrApi.clockInEmployee(employeeId);
       fetchAttendance();
+    } catch (failure) {
+      setError(isAxiosError(failure) ? failure.response?.data?.message || 'Unable to save attendance.' : 'Unable to save attendance.');
     } finally {
       setClockingId(null);
     }
@@ -71,8 +80,11 @@ const AttendancePage = () => {
   const handleClockOut = async (employeeId: string) => {
     try {
       setClockingId(employeeId);
+      setError(null);
       await hrApi.clockOutEmployee(employeeId);
       fetchAttendance();
+    } catch (failure) {
+      setError(isAxiosError(failure) ? failure.response?.data?.message || 'Unable to save attendance.' : 'Unable to save attendance.');
     } finally {
       setClockingId(null);
     }
@@ -92,6 +104,9 @@ const AttendancePage = () => {
         </div>
       </div>
 
+      {error && <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+        {error} <Button variant="secondary" size="sm" onClick={() => void fetchAttendance()}>Retry</Button>
+      </div>}
       {/* Today's Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4
         gap-4 mb-6">
@@ -145,7 +160,7 @@ const AttendancePage = () => {
         <input
           type="date"
           value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
+          onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
           className="px-4 py-2 border border-gray-200
             rounded-lg text-sm focus:outline-none
             focus:ring-2 focus:ring-primary-500"
@@ -153,7 +168,7 @@ const AttendancePage = () => {
 
         <select
           value={empFilter}
-          onChange={(e) => setEmpFilter(e.target.value)}
+          onChange={(e) => { setEmpFilter(e.target.value); setPage(1); }}
           className="flex-1 px-4 py-2 border border-gray-200
             rounded-lg text-sm bg-white focus:outline-none
             focus:ring-2 focus:ring-primary-500"
@@ -295,7 +310,7 @@ const AttendancePage = () => {
 
                     {/* Working Hours */}
                     <td className="px-6 py-4">
-                      {att.workingHours ? (
+                      {att.workingHours !== null ? (
                         <span className={`text-sm font-medium
                           ${att.workingHours >= 8
                             ? 'text-green-600'
@@ -346,6 +361,13 @@ const AttendancePage = () => {
           </div>
         )}
       </div>
+      {data && data.totalPages > 1 && <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <span className="text-sm text-gray-500">Page {page} of {data.totalPages} · {data.totalCount} records</span>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" disabled={isLoading || page <= 1} onClick={() => setPage(value => value - 1)}>Previous</Button>
+          <Button variant="secondary" size="sm" disabled={isLoading || page >= data.totalPages} onClick={() => setPage(value => value + 1)}>Next</Button>
+        </div>
+      </div>}
     </div>
   );
 };

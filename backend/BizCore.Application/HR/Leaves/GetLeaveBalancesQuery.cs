@@ -1,6 +1,7 @@
 ﻿namespace BizCore.Application.HR.Leaves;
 
 using BizCore.Application.Common.Interfaces;
+using BizCore.Application.HR.Access;
 using BizCore.Application.Common.Models;
 using BizCore.Application.HR.DTOs;
 using MediatR;
@@ -31,6 +32,9 @@ public class GetLeaveBalancesQueryHandler
             GetLeaveBalancesQuery query,
             CancellationToken cancellationToken)
     {
+        var caller = await EmployeeAccess.GetCallerAsync(_context, _currentUser, cancellationToken);
+        await EmployeeAccess.RequireAsync(_context, caller, query.EmployeeId, cancellationToken);
+
         var year = query.Year ?? DateTime.UtcNow.Year;
 
         var balances = await _context.LeaveBalances

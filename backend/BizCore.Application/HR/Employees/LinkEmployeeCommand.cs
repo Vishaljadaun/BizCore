@@ -2,6 +2,7 @@
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
+using BizCore.Application.HR.Access;
 using BizCore.Application.Common.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -154,22 +155,11 @@ public class GetMyEmployeeProfileQueryHandler
         GetMyEmployeeProfileQuery query,
         CancellationToken cancellationToken)
     {
-        if (!_currentUser.EmployeeId.HasValue)
-            return Result<DTOs.EmployeeResponse>.Failure(
-                "No employee profile linked to your account.",
-                404);
-
-        var employee = await _context.Employees
-            .IgnoreQueryFilters()
-            .AsNoTracking()
+        var caller = await EmployeeAccess.GetCallerAsync(_context, _currentUser, cancellationToken);
+        var linked = await EmployeeAccess.RequireAsync(_context, caller, null, cancellationToken);
+        var employee = await _context.Employees.IgnoreQueryFilters().AsNoTracking()
             .Include(e => e.Department)
-            .FirstOrDefaultAsync(e =>
-                e.Id == _currentUser.EmployeeId.Value,
-                cancellationToken);
-
-        if (employee == null)
-            return Result<DTOs.EmployeeResponse>.Failure(
-                "Employee profile not found.", 404);
+            .SingleAsync(e => e.Id == linked.Id && e.CompanyId == caller.CompanyId, cancellationToken);
 
         return Result<DTOs.EmployeeResponse>.Success(
             new DTOs.EmployeeResponse(

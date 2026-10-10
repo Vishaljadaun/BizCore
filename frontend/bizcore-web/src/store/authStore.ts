@@ -9,6 +9,8 @@ import type { User, AuthResponse } from '../types';
 //             Simple API, no Provider wrapper needed, built-in persistence
 
 interface AuthState {
+  sessionRevision: number;
+  renewSession: (data: AuthResponse) => void;
   // ── State (data stored in the store) ──────────────────────────────────────
   user:            User | null;     // null = not logged in
   accessToken:     string | null;   // JWT token sent with every API request
@@ -26,7 +28,9 @@ export const useAuthStore = create<AuthState>()(
   // When page refreshes, state is restored from localStorage
   // Without persist: every page refresh = logged out
   persist(
-    (set) => ({
+    (set, get) => ({
+      sessionRevision: 0,
+      renewSession: (data) => set({ user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken }),
       // Initial state — user not logged in
       user:            null,
       accessToken:     null,
@@ -36,6 +40,7 @@ export const useAuthStore = create<AuthState>()(
       // Called after successful login or register
       login: (data: AuthResponse) => {
         set({
+          sessionRevision: get().sessionRevision + 1,
           user:            data.user,
           accessToken:     data.accessToken,
           refreshToken:    data.refreshToken,
@@ -48,6 +53,7 @@ export const useAuthStore = create<AuthState>()(
       // Called on logout — clears everything
       logout: () => {
         set({
+          sessionRevision: get().sessionRevision + 1,
           user:            null,
           accessToken:     null,
           refreshToken:    null,

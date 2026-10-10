@@ -2,6 +2,7 @@
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
+using BizCore.Application.HR.Access;
 using BizCore.Application.Common.Models;
 using BizCore.Application.HR.DTOs;
 using BizCore.Domain.Entities.HR;
@@ -68,6 +69,9 @@ public class ApplyLeaveCommandHandler
                 });
 
         // Check employee exists
+        var caller = await EmployeeAccess.GetCallerAsync(_context, _currentUser, cancellationToken);
+        await EmployeeAccess.RequireAsync(_context, caller, command.EmployeeId, cancellationToken);
+
         var employee = await _context.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(e =>

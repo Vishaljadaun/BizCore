@@ -1,6 +1,7 @@
 ﻿namespace BizCore.Application.HR.Leaves;
 
 using BizCore.Application.Common.Interfaces;
+using BizCore.Application.HR.Access;
 using BizCore.Application.Common.Models;
 using BizCore.Application.HR.DTOs;
 using BizCore.Application.Users.DTOs;
@@ -35,6 +36,11 @@ public class GetLeaveRequestsQueryHandler
             GetLeaveRequestsQuery query,
             CancellationToken cancellationToken)
     {
+        var caller = await EmployeeAccess.GetCallerAsync(_context, _currentUser, cancellationToken);
+        Guid? employeeId = query.EmployeeId;
+        if (!EmployeeAccess.CanManage(caller) || employeeId.HasValue)
+            employeeId = (await EmployeeAccess.RequireAsync(_context, caller, employeeId, cancellationToken)).Id;
+
         var leaveQuery = _context.LeaveRequests
             .IgnoreQueryFilters()
             .AsNoTracking()
@@ -44,9 +50,9 @@ public class GetLeaveRequestsQueryHandler
             .Where(lr => lr.CompanyId == _currentUser.CompanyId);
 
         // Filter by employee
-        if (query.EmployeeId.HasValue)
+        if (employeeId.HasValue)
             leaveQuery = leaveQuery.Where(lr =>
-                lr.EmployeeId == query.EmployeeId.Value);
+                lr.EmployeeId == employeeId.Value);
 
         // Filter by status
         if (!string.IsNullOrWhiteSpace(query.Status) &&

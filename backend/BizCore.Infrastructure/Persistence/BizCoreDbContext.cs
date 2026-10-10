@@ -36,6 +36,9 @@ namespace BizCore.Infrastructure.Persistence
         public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
         public DbSet<Attendance> Attendances => Set<Attendance>();
 
+        private Guid? CurrentCompanyId => _currentUser.CompanyId;
+        private bool IsSuperAdmin => _currentUser.UserRole == "SuperAdmin";
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             // Scans Infrastructure assembly and applies ALL
@@ -44,18 +47,10 @@ namespace BizCore.Infrastructure.Persistence
             builder.ApplyConfigurationsFromAssembly(
                 typeof(BizCoreDbContext).Assembly);
 
-            // Global query filter for multi-tenancy
-            // ONLY apply if a company context exists
-            // (SuperAdmin calls won't have a CompanyId)
-            if (_currentUser?.CompanyId.HasValue == true)
-            {
-                builder.Entity<User>()
-                    .HasQueryFilter(u =>
-                        u.CompanyId == _currentUser.CompanyId.Value
-                        && u.IsActive);
-                // Also filters out inactive users automatically
-                // Active users only — ever. No soft-delete leaks.
-            }
+            // EF caches models; context properties are evaluated per request.
+            // Inactive users remain visible to tenant administration.
+            builder.Entity<User>().HasQueryFilter(u => IsSuperAdmin ||
+                (CurrentCompanyId.HasValue && u.CompanyId == CurrentCompanyId));
 
             base.OnModelCreating(builder);
         }

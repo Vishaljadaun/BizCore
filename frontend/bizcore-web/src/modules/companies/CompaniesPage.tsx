@@ -47,12 +47,11 @@ const CompaniesPage = () => {
   }, [search, statusFilter, page]);
 
   useEffect(() => {
-    fetchCompanies();
+    // This effect starts an external request and exposes its loading state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchCompanies();
   }, [fetchCompanies]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [search, statusFilter]);
 
   const handleToggle = async (company: CompanyResponse) => {
     try {
@@ -113,7 +112,7 @@ const CompaniesPage = () => {
             type="text"
             placeholder="Search companies..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 border
               border-gray-200 rounded-lg text-sm
               focus:outline-none focus:ring-2
@@ -123,7 +122,7 @@ const CompaniesPage = () => {
 
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="px-4 py-2 border border-gray-200
             rounded-lg text-sm focus:outline-none
             focus:ring-2 focus:ring-primary-500 bg-white"

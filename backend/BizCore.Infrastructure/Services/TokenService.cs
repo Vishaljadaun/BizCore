@@ -88,24 +88,23 @@ namespace BizCore.Infrastructure.Services
                     Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!));
 
                 var tokenHandler = new JwtSecurityTokenHandler();
-                tokenHandler.ValidateToken(token,
+                var principal = tokenHandler.ValidateToken(token,
                     new TokenValidationParameters
                     {
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = key,
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
+                        ValidateIssuer = true,
+                        ValidIssuer = jwtSettings["Issuer"],
+                        ValidateAudience = true,
+                        ValidAudience = jwtSettings["Audience"],
+                        ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 },
                         ValidateLifetime = false,
                         ClockSkew = TimeSpan.Zero
                     },
                     out SecurityToken validatedToken);
 
-                var jwtToken = (JwtSecurityToken)validatedToken;
-                var userIdClaim = jwtToken.Claims
-                    .FirstOrDefault(c =>
-                        c.Type == ClaimTypes.NameIdentifier);
-
-                return Guid.TryParse(userIdClaim?.Value, out var userId)
+                var userIdValue = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+                return Guid.TryParse(userIdValue, out var userId)
                     ? userId : null;
             }
             catch

@@ -28,6 +28,18 @@ export const navigation: NavItem[] = [
     ],
   },
 
+{
+  label: 'My Profile',
+  path:  '/my-profile',
+  icon:  '👤',
+  roles: [
+    UserRole.SuperAdmin,
+    UserRole.CompanyAdmin,
+    UserRole.Manager,
+    UserRole.Employee,
+  ],
+},
+
   // ── HR Module ────────────────────────────────────────────────────────────
  // HR Module children mein departments add karo:
 {
@@ -61,17 +73,7 @@ export const navigation: NavItem[] = [
       roles: [UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager],
     },
     
-{
-  label: 'My Profile',
-  path:  '/my-profile',
-  icon:  '👤',
-  roles: [
-    UserRole.SuperAdmin,
-    UserRole.CompanyAdmin,
-    UserRole.Manager,
-    UserRole.Employee,
-  ],
-},
+
 
 
   ],

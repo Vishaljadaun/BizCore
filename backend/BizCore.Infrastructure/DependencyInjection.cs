@@ -59,9 +59,9 @@ namespace BizCore.Infrastructure
             var jwtSettings = configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"];
 
-            if (string.IsNullOrEmpty(secretKey))
+            if (string.IsNullOrWhiteSpace(secretKey) || secretKey.Length < 32)
                 throw new InvalidOperationException(
-                    "JWT SecretKey appsettings.json mein configure nahi hai!");
+                    "Configure JwtSettings:SecretKey with a private random value of at least 32 characters.");
 
             services.AddAuthentication(options =>
             {

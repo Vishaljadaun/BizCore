@@ -31,7 +31,7 @@ export const authApi = {
   },
 
   logout: async (refreshToken: string): Promise<void> => {
-    await axiosClient.post('/auth/logout', refreshToken);
+    await axiosClient.post('/auth/logout', JSON.stringify(refreshToken), { headers: { 'Content-Type': 'application/json' } });
   },
 
   // Backend now also returns employeeId in claims

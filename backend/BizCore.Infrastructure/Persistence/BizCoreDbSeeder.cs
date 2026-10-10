@@ -2,6 +2,7 @@
 using BizCore.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,13 +15,15 @@ namespace BizCore.Infrastructure.Persistence
     {
         private readonly BizCoreDbContext _context;
         private readonly ILogger<BizCoreDbSeeder> _logger;
+        private readonly IConfiguration _configuration;
 
         public BizCoreDbSeeder(
             BizCoreDbContext context,
-            ILogger<BizCoreDbSeeder> logger)
+            ILogger<BizCoreDbSeeder> logger, IConfiguration configuration)
         {
             _context = context;
             _logger = logger;
+            _configuration = configuration;
         }
 
         public async Task SeedAsync()
@@ -32,7 +35,8 @@ namespace BizCore.Infrastructure.Persistence
                 // In production you'd run migrations manually
                 await _context.Database.MigrateAsync();
 
-                await SeedSuperAdminAsync();
+                if (_configuration.GetValue<bool>("Seed:Enabled"))
+                    await SeedSuperAdminAsync();
 
                 _logger.LogInformation("Database seeded successfully");
             }
@@ -45,6 +49,11 @@ namespace BizCore.Infrastructure.Persistence
 
         private async Task SeedSuperAdminAsync()
         {
+            var email = _configuration["Seed:SuperAdminEmail"]?.Trim().ToLowerInvariant();
+            var password = _configuration["Seed:SuperAdminPassword"];
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password) || password.Length < 12)
+                throw new InvalidOperationException("Seeding requires Seed:SuperAdminEmail and a private Seed:SuperAdminPassword of at least 12 characters.");
+
             // Check if SuperAdmin company already exists
             // Idempotent = safe to run multiple times
             var superAdminCompany = await _context.Companies
@@ -75,10 +84,10 @@ namespace BizCore.Infrastructure.Persistence
                     CompanyId = superAdminCompany.Id,
                     FirstName = "Super",
                     LastName = "Admin",
-                    Email = "superadmin@bizcore.com",
+                    Email = email,
                     // BCrypt hashes the password — never store plain text
                     // Change this password immediately after first login!
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123456"),
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
                     Role = UserRole.SuperAdmin,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -87,9 +96,7 @@ namespace BizCore.Infrastructure.Persistence
                 await _context.Users.AddAsync(superAdmin);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation(
-                    "SuperAdmin created. Email: superadmin@bizcore.com | " +
-                    "Password: Admin@123456 | CHANGE THIS IMMEDIATELY!");
+                _logger.LogInformation("SuperAdmin created using credentials from private configuration.");
             }
             else
             {

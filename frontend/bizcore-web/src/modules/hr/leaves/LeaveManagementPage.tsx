@@ -41,8 +41,11 @@ const LeaveManagementPage = () => {
     }
   }, [statusFilter, page]);
 
-  useEffect(() => { fetchLeaves(); }, [fetchLeaves]);
-  useEffect(() => { setPage(1); }, [statusFilter]);
+  useEffect(() => {
+    // This effect starts an external request and exposes its loading state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchLeaves();
+  }, [fetchLeaves]);
 
   const handleApprove = async (
     leaveId: string,
