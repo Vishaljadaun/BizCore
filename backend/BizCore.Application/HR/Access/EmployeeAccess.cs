@@ -5,7 +5,7 @@ using BizCore.Domain.Entities.HR;
 using BizCore.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
-namespace BizCore.Application.HR.Common;
+namespace BizCore.Application.HR.Access;
 
 // Re-read membership and links so unlinked/deactivated accounts cannot keep
 // using a stale employee_id or role claim until their access token expires.

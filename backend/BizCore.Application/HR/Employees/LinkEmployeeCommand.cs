@@ -2,7 +2,7 @@
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
-using BizCore.Application.HR.Common;
+using BizCore.Application.HR.Access;
 using BizCore.Application.Common.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

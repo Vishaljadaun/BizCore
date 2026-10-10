@@ -13,6 +13,7 @@
 - Define the user tenant filter for every EF model build and evaluate tenant context per request. Keep inactive users visible to their administrators.
 - Add attendance pagination and error presentation; reset list pagination in filter change events.
 - Replace implicit shared super-admin credentials with opt-in private seeding and remove connection/signing secrets from base configuration.
+- Remove unused AutoMapper registrations/packages flagged by dependency audit.
 - Add meaningful backend/frontend tests and CI; correct frontend folder and local API port in setup instructions.
 
 No schema migration is introduced by this milestone. Existing accounts and records are not deleted or reset. Set private database and JWT configuration before running the new branch.

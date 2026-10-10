@@ -39,13 +39,6 @@ namespace BizCore.Application
             services.AddValidatorsFromAssembly(
                 Assembly.GetExecutingAssembly());
 
-            // ── AutoMapper ────────────────────────────────────
-            // Version 13 mein AddAutoMapper ka syntax:
-            services.AddAutoMapper(
-                Assembly.GetExecutingAssembly());
-            // Note: Assembly object directly pass karo
-            // Action<IMapperConfigurationExpression> nahi
-
             return services;
         }
     }

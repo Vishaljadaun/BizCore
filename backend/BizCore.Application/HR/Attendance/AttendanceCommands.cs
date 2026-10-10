@@ -4,7 +4,7 @@ using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
 using BizCore.Application.Common.Models;
 using BizCore.Application.HR.DTOs;
-using BizCore.Application.HR.Common;
+using BizCore.Application.HR.Access;
 using BizCore.Application.Users.DTOs;
 using BizCore.Domain.Enums;
 using MediatR;
