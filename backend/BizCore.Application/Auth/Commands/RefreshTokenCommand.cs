@@ -73,6 +73,12 @@ public class RefreshTokenCommandHandler
             return Result<AuthResponse>.Unauthorized(
                 "Token expire ho gaya. Dobara login karo.");
 
+        if (!storedToken.User.IsActive || !storedToken.User.Company.IsActive)
+        {
+            await RevokeAllUserTokens(userId.Value, cancellationToken);
+            return Result<AuthResponse>.Unauthorized("Your account or company is inactive. Contact your administrator.");
+        }
+
         // Old token mark as used (Rotation pattern)
         storedToken.IsUsed = true;
 

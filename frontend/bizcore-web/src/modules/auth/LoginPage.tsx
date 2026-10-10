@@ -45,8 +45,10 @@ const LoginPage = () => {
     if (!ctx) return;
 
     let raf: number;
-    let particles: any[] = [];
-    let tenantHubs: any[] = [];
+    const particles: { type: string; x: number; y: number; vx: number; vy: number;
+      radius: number; color: string; alpha: number; angle: number; spin: number;
+      empId: string; tenantIndex: number }[] = [];
+    let tenantHubs: { name: string; x: number; y: number; color: string; pulse: number; maxPulse: number }[] = [];
 
     const resizeCanvas = () => {
       const w = window.innerWidth;

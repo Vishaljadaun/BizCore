@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AxiosError }   from 'axios';
 import { hrApi }        from '../../../api/hrApi';
-import { usersApi }     from '../../../api/usersApi';
 import type {
   EmployeeResponse,
   DepartmentResponse,
-  UserResponse,
   PaginatedResponse,
 }                       from '../../../types';
 import Button           from '../../../components/shared/Button';
@@ -50,8 +48,11 @@ const EmployeesPage = () => {
     }
   }, [search, deptFilter, page]);
 
-  useEffect(() => { fetchEmployees(); }, [fetchEmployees]);
-  useEffect(() => { setPage(1); }, [search, deptFilter]);
+  useEffect(() => {
+    // This effect starts an external request and exposes its loading state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchEmployees();
+  }, [fetchEmployees]);
 
   const handleRevokeAccess = async (emp: EmployeeResponse) => {
     if (!confirm(
@@ -100,7 +101,7 @@ const EmployeesPage = () => {
             type="text"
             placeholder="Search by name, email, code..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 border
               border-gray-200 rounded-lg text-sm
               focus:outline-none focus:ring-2
@@ -110,7 +111,7 @@ const EmployeesPage = () => {
 
         <select
           value={deptFilter}
-          onChange={(e) => setDeptFilter(e.target.value)}
+          onChange={(e) => { setDeptFilter(e.target.value); setPage(1); }}
           className="px-4 py-2 border border-gray-200
             rounded-lg text-sm bg-white focus:outline-none
             focus:ring-2 focus:ring-primary-500"

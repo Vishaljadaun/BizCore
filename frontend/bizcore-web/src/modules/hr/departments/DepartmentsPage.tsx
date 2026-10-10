@@ -33,8 +33,11 @@ const DepartmentsPage = () => {
     }
   }, [search, page]);
 
-  useEffect(() => { fetchDepartments(); }, [fetchDepartments]);
-  useEffect(() => { setPage(1); }, [search]);
+  useEffect(() => {
+    // This effect starts an external request and exposes its loading state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchDepartments();
+  }, [fetchDepartments]);
 
   return (
     <div>
@@ -63,7 +66,7 @@ const DepartmentsPage = () => {
             type="text"
             placeholder="Search departments..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 border
               border-gray-200 rounded-lg text-sm
               focus:outline-none focus:ring-2

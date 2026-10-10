@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useForm }           from 'react-hook-form';
+import { useForm, useWatch }           from 'react-hook-form';
 import { zodResolver }       from '@hookform/resolvers/zod';
 import { z }                 from 'zod';
 import { Link, useNavigate } from 'react-router-dom';
@@ -166,19 +166,19 @@ const RegisterPage = () => {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
   });
 
-  const passwordValue    = watch('password', '');
+  const passwordValue    = useWatch({ control, name: 'password', defaultValue: '' });
   const passwordStrength = getPasswordStrength(passwordValue);
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setServerError(null);
-      const { confirmPassword: _, ...registerData } = data;
+      const registerData = { companyName: data.companyName, firstName: data.firstName, lastName: data.lastName, email: data.email, password: data.password };
       const response = await authApi.register(registerData);
       login(response);
       navigate('/dashboard');

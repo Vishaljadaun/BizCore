@@ -18,7 +18,7 @@ const CompanyDetailPage  = lazy(() => import('../modules/companies/CompanyDetail
 
 // Optional: If you plan to use SuperAdminDashboard later, keep this. 
 // Otherwise you can remove it if DashboardPage handles logic based on role.
-const SuperAdminDashboard = lazy(() => import('../modules/dashboard/SuperAdminDashboard'));
+
 
 // HR Module Imports
 const DepartmentsPage      = lazy(() => import('../modules/hr/departments/DepartmentsPage'));
@@ -81,10 +81,13 @@ const AppRoutes = () => {
               <Route path="/hr/employees"  element={<EmployeesPage />} />
               <Route path="/hr/leaves"     element={<LeaveManagementPage />} />
               <Route path="/hr/attendance" element={<AttendancePage />} />
-              <Route
-  path="/my-profile"
-  element={<MyProfilePage />}
-/>
+
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={[
+              UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager, UserRole.Employee
+            ]} />}>
+              <Route path="/my-profile" element={<MyProfilePage />} />
             </Route>
 
             {/* HR Departments — Admins only */}

@@ -4,6 +4,7 @@ using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
 using BizCore.Application.Common.Models;
 using BizCore.Application.HR.DTOs;
+using BizCore.Application.HR.Common;
 using BizCore.Application.Users.DTOs;
 using BizCore.Domain.Enums;
 using MediatR;
@@ -38,26 +39,9 @@ public class ClockInCommandHandler
             ?? throw new ForbiddenAccessException(
                 "Company context not found.");
 
-        // ── Determine which employee is clocking in ────────
-        Guid employeeId;
-
-        if (command.EmployeeId.HasValue &&
-            command.EmployeeId.Value != Guid.Empty)
-        {
-            // Manager/Admin clocking in on behalf of someone
-            employeeId = command.EmployeeId.Value;
-        }
-        else
-        {
-            // Employee clocking in themselves
-            // Read employee_id from JWT claim
-            if (!_currentUser.EmployeeId.HasValue)
-                return Result<AttendanceResponse>.Failure(
-                    "No employee profile linked to your account. " +
-                    "Please contact HR to link your profile.");
-
-            employeeId = _currentUser.EmployeeId.Value;
-        }
+        var caller = await EmployeeAccess.GetCallerAsync(_context, _currentUser, cancellationToken);
+        var employee = await EmployeeAccess.RequireAsync(_context, caller, command.EmployeeId, cancellationToken);
+        var employeeId = employee.Id;
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -66,24 +50,13 @@ public class ClockInCommandHandler
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(a =>
                 a.EmployeeId == employeeId &&
+                a.CompanyId == companyId &&
                 a.Date == today,
                 cancellationToken);
 
         if (existing != null)
             return Result<AttendanceResponse>.Failure(
                 "Already clocked in for today.");
-
-        // Verify employee exists and belongs to this company
-        var employee = await _context.Employees
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(e =>
-                e.Id == employeeId &&
-                e.CompanyId == companyId,
-                cancellationToken);
-
-        if (employee == null)
-            throw new NotFoundException(
-                "Employee", employeeId);
 
         // Determine if late (after 9:30 AM)
         var now = DateTime.UtcNow;
@@ -147,23 +120,9 @@ public class ClockOutCommandHandler
             ?? throw new ForbiddenAccessException(
                 "Company context not found.");
 
-        // ── Determine which employee is clocking out ───────
-        Guid employeeId;
-
-        if (command.EmployeeId.HasValue &&
-            command.EmployeeId.Value != Guid.Empty)
-        {
-            employeeId = command.EmployeeId.Value;
-        }
-        else
-        {
-            if (!_currentUser.EmployeeId.HasValue)
-                return Result<AttendanceResponse>.Failure(
-                    "No employee profile linked to your account. " +
-                    "Please contact HR to link your profile.");
-
-            employeeId = _currentUser.EmployeeId.Value;
-        }
+        var caller = await EmployeeAccess.GetCallerAsync(_context, _currentUser, cancellationToken);
+        var employee = await EmployeeAccess.RequireAsync(_context, caller, command.EmployeeId, cancellationToken);
+        var employeeId = employee.Id;
 
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -172,6 +131,7 @@ public class ClockOutCommandHandler
             .Include(a => a.Employee)
             .FirstOrDefaultAsync(a =>
                 a.EmployeeId == employeeId &&
+                a.CompanyId == companyId &&
                 a.Date == today,
                 cancellationToken);
 
@@ -241,15 +201,20 @@ public class GetAttendanceQueryHandler
             GetAttendanceQuery query,
             CancellationToken cancellationToken)
     {
+        var caller = await EmployeeAccess.GetCallerAsync(_context, _currentUser, cancellationToken);
+        Guid? employeeId = query.EmployeeId;
+        if (!EmployeeAccess.CanManage(caller) || employeeId.HasValue)
+            employeeId = (await EmployeeAccess.RequireAsync(_context, caller, employeeId, cancellationToken)).Id;
+
         var attQuery = _context.Attendances
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Include(a => a.Employee)
             .Where(a => a.CompanyId == _currentUser.CompanyId);
 
-        if (query.EmployeeId.HasValue)
+        if (employeeId.HasValue)
             attQuery = attQuery.Where(a =>
-                a.EmployeeId == query.EmployeeId.Value);
+                a.EmployeeId == employeeId.Value);
 
         if (query.Date.HasValue)
             attQuery = attQuery.Where(a =>

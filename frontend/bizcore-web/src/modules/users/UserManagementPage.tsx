@@ -55,7 +55,7 @@ const UserManagementPage = () => {
         pageSize: 10,
       });
       setData(result);
-    } catch (err) {
+    } catch {
       setError('Failed to load users. Please try again.');
     } finally {
       setIsLoading(false);
@@ -65,13 +65,12 @@ const UserManagementPage = () => {
 
   // Fetch on mount and when dependencies change
   useEffect(() => {
-    fetchUsers();
+    // This effect starts an external request and exposes its loading state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchUsers();
   }, [fetchUsers]);
 
   // Reset to page 1 when search/filter changes
-  useEffect(() => {
-    setPage(1);
-  }, [search, roleFilter]);
 
   // ── Toggle User Status ──────────────────────────────
   const handleToggleStatus = async (user: UserResponse) => {
@@ -140,7 +139,7 @@ const UserManagementPage = () => {
             type="text"
             placeholder="Search by name or email..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 border border-gray-200
               rounded-lg text-sm focus:outline-none
               focus:ring-2 focus:ring-primary-500"
@@ -150,7 +149,7 @@ const UserManagementPage = () => {
         {/* Role filter */}
         <select
           value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
+          onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
           className="px-4 py-2 border border-gray-200 rounded-lg
             text-sm focus:outline-none focus:ring-2
             focus:ring-primary-500 bg-white"

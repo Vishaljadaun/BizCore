@@ -160,6 +160,14 @@ export const hrApi = {
     return res.data;
   },
 
+  getEmployeeAttendance: async (
+    employeeId: string,
+    params?: { date?: string; page?: number; pageSize?: number }
+  ): Promise<PaginatedResponse<AttendanceResponse>> => {
+    const res = await axiosClient.get(`/hr/employees/${employeeId}/attendance`, { params });
+    return res.data;
+  },
+
   // Manager/Admin clocks in a SPECIFIC employee
   clockInEmployee: async (
     employeeId: string

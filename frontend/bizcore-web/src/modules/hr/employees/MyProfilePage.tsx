@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuthStore }  from '../../../store/authStore';
+import { isAxiosError } from 'axios';
 import { hrApi }         from '../../../api/hrApi';
 import type {
   EmployeeResponse,
@@ -9,7 +9,6 @@ import type {
 import Button            from '../../../components/shared/Button';
 
 const MyProfilePage = () => {
-  const { user }       = useAuthStore();
   const [employee,     setEmployee]     =
     useState<EmployeeResponse | null>(null);
   const [balances,     setBalances]     =
@@ -21,46 +20,65 @@ const MyProfilePage = () => {
   const [noProfile,    setNoProfile]    = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
+  const [error, setError] = useState<string | null>(null);
+  const [attendanceAvailable, setAttendanceAvailable] = useState(false);
+  const [reload, setReload] = useState(0);
+
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      setNoProfile(false);
+      let profileLoaded = false;
       try {
-        setIsLoading(true);
-
-        // Get my own employee profile
         const empData = await hrApi.getMyProfile();
+        if (cancelled) return;
+        profileLoaded = true;
         setEmployee(empData);
-
-        const [balanceData, attData] = await Promise.all([
+        const [balanceResult, attendanceResult] = await Promise.allSettled([
           hrApi.getLeaveBalances(empData.id),
-          hrApi.getAttendance({
-            employeeId: empData.id,
-            date: new Date().toISOString().split('T')[0],
-            pageSize: 1,
+          hrApi.getEmployeeAttendance(empData.id, {
+            date: new Date().toISOString().split('T')[0], pageSize: 1,
           }),
         ]);
-
-        setBalances(balanceData);
-
-        if (attData.items.length > 0) {
-          setTodayAtt(attData.items[0]);
-          setIsClockedIn(!attData.items[0].clockOut);
+        if (cancelled) return;
+        if (balanceResult.status === 'fulfilled') setBalances(balanceResult.value);
+        if (attendanceResult.status === 'fulfilled') {
+          const today = attendanceResult.value.items[0] ?? null;
+          setTodayAtt(today);
+          setIsClockedIn(Boolean(today && !today.clockOut));
         }
-      } catch {
-        setNoProfile(true);
+        setAttendanceAvailable(attendanceResult.status === 'fulfilled');
+        if (balanceResult.status === 'rejected' || attendanceResult.status === 'rejected') {
+          setError('Some attendance or leave details could not be loaded. Please retry.');
+        }
+      } catch (failure) {
+        if (cancelled) return;
+        if (!profileLoaded && isAxiosError(failure) && failure.response?.status === 404) {
+          setNoProfile(true);
+        } else {
+          setError('Unable to load your profile. Please check your connection and retry.');
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     };
-
-    fetchData();
-  }, []);
+    void fetchData();
+    return () => { cancelled = true; };
+  }, [reload]);
 
   const handleClockIn = async () => {
     try {
       setActionLoading(true);
+      setError(null);
       const result = await hrApi.selfClockIn();
       setTodayAtt(result);
       setIsClockedIn(true);
+    } catch (failure) {
+      setError(isAxiosError(failure)
+        ? failure.response?.data?.message || 'Attendance could not be saved. Please retry.'
+        : 'Attendance could not be saved. Please retry.');
     } finally {
       setActionLoading(false);
     }
@@ -69,9 +87,14 @@ const MyProfilePage = () => {
   const handleClockOut = async () => {
     try {
       setActionLoading(true);
+      setError(null);
       const result = await hrApi.selfClockOut();
       setTodayAtt(result);
       setIsClockedIn(false);
+    } catch (failure) {
+      setError(isAxiosError(failure)
+        ? failure.response?.data?.message || 'Attendance could not be saved. Please retry.'
+        : 'Attendance could not be saved. Please retry.');
     } finally {
       setActionLoading(false);
     }
@@ -86,7 +109,7 @@ const MyProfilePage = () => {
     );
   }
 
-  if (noProfile || !employee) {
+  if (noProfile) {
     return (
       <div className="bg-yellow-50 border border-yellow-200
         rounded-xl p-8 text-center">
@@ -102,12 +125,23 @@ const MyProfilePage = () => {
     );
   }
 
+  if (!employee) {
+    return <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-6">
+      <p>{error || 'Unable to load your profile.'}</p>
+      <Button className="mt-4" onClick={() => setReload(value => value + 1)}>Retry</Button>
+    </div>;
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">
         My Profile
       </h1>
 
+      {error && <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+        <p>{error}</p>
+        <Button variant="secondary" size="sm" className="mt-3" onClick={() => setReload(value => value + 1)}>Retry</Button>
+      </div>}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Left: Profile Card */}
@@ -175,8 +209,10 @@ const MyProfilePage = () => {
               Today's Attendance
             </h3>
 
-            {todayAtt ? (
-              <div className="flex items-center
+            {!attendanceAvailable ? (
+              <p className="text-sm text-gray-500">Attendance is unavailable. Retry loading before clocking in or out.</p>
+            ) : todayAtt ? (
+              <div className="flex flex-wrap gap-4 items-center
                 justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center gap-3">
@@ -213,7 +249,7 @@ const MyProfilePage = () => {
                     </div>
                   )}
 
-                  {todayAtt.workingHours && (
+                  {todayAtt.workingHours !== null && (
                     <p className="text-sm text-gray-600 mt-2">
                       ⏱ {todayAtt.workingHours}h worked today
                     </p>
@@ -247,7 +283,7 @@ const MyProfilePage = () => {
                 </div>
               </div>
             ) : (
-              <div className="flex items-center
+              <div className="flex flex-wrap gap-4 items-center
                 justify-between">
                 <p className="text-gray-500 text-sm">
                   Not clocked in yet today
@@ -294,8 +330,7 @@ const MyProfilePage = () => {
                       className="h-full bg-primary-500
                         rounded-full"
                       style={{
-                        width: `${(bal.remainingDays /
-                          bal.totalDays) * 100}%`
+                        width: `${bal.totalDays > 0 ? Math.max(0, Math.min(100, (bal.remainingDays / bal.totalDays) * 100)) : 0}%`
                       }}
                     />
                   </div>
