@@ -6,11 +6,16 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api'
 const axiosClient = axios.create({ baseURL, timeout: 30000 });
 // A separate client prevents failed refreshes from entering the interceptor again.
 const tokenClient = axios.create({ baseURL, timeout: 30000 });
-type RetryRequest = InternalAxiosRequestConfig & { _retry?: boolean };
+type RetryRequest = InternalAxiosRequestConfig & { _retry?: boolean; _sessionRevision?: number };
 let refreshing: { token: string; promise: Promise<string> } | null = null;
 
 axiosClient.interceptors.request.use((config) => {
-  const { accessToken } = useAuthStore.getState();
+  const { accessToken, sessionRevision } = useAuthStore.getState();
+  const request = config as RetryRequest;
+  if (request._sessionRevision !== undefined && request._sessionRevision !== sessionRevision) {
+    throw new axios.CanceledError('The session changed before this request could be sent.');
+  }
+  request._sessionRevision ??= sessionRevision;
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
   else delete config.headers.Authorization;
   return config;
@@ -25,6 +30,9 @@ axiosClient.interceptors.response.use(response => response, async (error: AxiosE
   }
   request._retry = true;
   const session = useAuthStore.getState();
+  if (request._sessionRevision !== session.sessionRevision) {
+    throw new axios.CanceledError('The session changed before this response arrived.');
+  }
   if (!session.accessToken || !session.refreshToken) {
     session.logout();
     return Promise.reject(error);
@@ -44,7 +52,7 @@ axiosClient.interceptors.response.use(response => response, async (error: AxiosE
       if (useAuthStore.getState().refreshToken !== refreshToken) {
         throw new axios.CanceledError('The session changed during token refresh.');
       }
-      useAuthStore.getState().login(data);
+      useAuthStore.getState().renewSession(data);
       return data.accessToken;
     }).catch((refreshError: unknown) => {
       if (useAuthStore.getState().refreshToken === refreshToken) {

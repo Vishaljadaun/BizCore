@@ -85,6 +85,24 @@ describe('authentication recovery', () => {
     expect(mocks.api).toHaveBeenCalledTimes(1);
   });
 
+  it('does not replay a delayed unauthorized action after another login', async () => {
+    useAuthStore.getState().login(auth());
+    let rejectOld!: () => void;
+    mocks.api.mockImplementation(config => new Promise((_resolve, reject) => {
+      rejectOld = () => unauthorized(config).catch(reject);
+    }));
+    const pending = client.post('/users', { firstName: 'Old session action' });
+    const assertion = expect(pending).rejects.toMatchObject({ code: 'ERR_CANCELED' });
+    await vi.waitFor(() => expect(mocks.api).toHaveBeenCalledOnce());
+    useAuthStore.getState().logout();
+    useAuthStore.getState().login(auth('another-login'));
+    rejectOld();
+    await assertion;
+    expect(mocks.api).toHaveBeenCalledTimes(1);
+    expect(mocks.refresh).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().accessToken).toBe('another-login');
+  });
+
   it('does not retry endlessly when a renewed token is also rejected', async () => {
     useAuthStore.getState().login(auth());
     mocks.api.mockImplementation(unauthorized);

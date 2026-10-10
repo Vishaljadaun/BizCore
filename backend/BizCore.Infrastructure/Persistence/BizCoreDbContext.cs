@@ -50,7 +50,7 @@ namespace BizCore.Infrastructure.Persistence
             // EF caches models; context properties are evaluated per request.
             // Inactive users remain visible to tenant administration.
             builder.Entity<User>().HasQueryFilter(u => IsSuperAdmin ||
-                (CurrentCompanyId.HasValue && u.CompanyId == CurrentCompanyId.Value));
+                (CurrentCompanyId.HasValue && u.CompanyId == CurrentCompanyId));
 
             base.OnModelCreating(builder);
         }
