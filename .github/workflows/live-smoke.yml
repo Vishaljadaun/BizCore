@@ -1,8 +1,6 @@
 name: Check live portfolio deployment
 on:
   workflow_dispatch:
-  push:
-    branches: [codex/bizcore-live-docs]
 permissions:
   contents: read
 jobs:
