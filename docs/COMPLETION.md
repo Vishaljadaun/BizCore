@@ -39,7 +39,8 @@ The UI calls `/api/hr/leave`, `/approve`, and `/reject`, but there is no matchin
 
 ## Milestone 4 — real database and deployment checks
 
-- Test PostgreSQL initial/repeated migrations, constraints, registration, login, and a complete two-browser HR workflow.
+- Added a PostgreSQL 16 + Chromium CI workflow for registration, login, employee creation/linking, mobile attendance and immediate link revocation. It starts the API twice against the same schema. See [TESTING.md](TESTING.md) for manual and automated checks.
+- Still needed: dedicated constraint/concurrency tests, existing-record persistence assertions across process restarts, and the wider tenant audit.
 - Add host configuration, CORS environment settings, health checks, Docker/Render and Vercel configuration.
 - Verify persistence after restart, database backup/restore, responsive layouts, and keyboard interactions.
 - Define company timezones, shifts, overnight attendance, and correction approval before payroll use.

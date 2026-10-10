@@ -114,9 +114,11 @@ npm test
 npm run build
 ```
 
-Backend tests cover employee ownership, company boundaries, revoked links, inactive accounts, per-context tenant filtering, token subject validation, and refresh rotation. They use EF InMemory and do not establish PostgreSQL migration/constraint correctness; a real PostgreSQL integration suite is still needed.
+Backend tests cover employee ownership, company boundaries, revoked links, inactive accounts, per-context tenant filtering, token subject validation, and refresh rotation. These fast handler tests use EF InMemory. A separate Playwright job starts the real API with PostgreSQL 16 and exercises registration, employee linking, attendance and revocation through the browser. It runs twice against the same database to check fresh and repeated migration startup.
 
-Frontend tests cover concurrent refresh, refresh failures, logout during refresh, employee route access, profile loading, and attendance errors. CI runs both test/build jobs on work branches and pull requests.
+Frontend tests cover concurrent refresh, refresh failures, logout during refresh, employee route access, profile loading, and attendance errors. CI runs backend, frontend and browser jobs on work branches and pull requests. The browser test also covers a phone-sized employee view; this is not a complete responsive or accessibility audit.
+
+For exact setup, expected results, automated browser commands and phone-friendly CI instructions, see [Testing BizCore](docs/TESTING.md).
 
 ## Try the employee workflow
 

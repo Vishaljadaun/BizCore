@@ -124,10 +124,10 @@ const CreateEmployeeModal = ({
 
           {/* Department select */}
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">
+            <label htmlFor="employee-department" className="text-sm font-medium text-gray-700">
               Department
             </label>
-            <select
+            <select id="employee-department"
               {...register('departmentId')}
               className={`w-full px-4 py-2.5 rounded-lg
                 border text-sm focus:outline-none
@@ -153,11 +153,12 @@ const CreateEmployeeModal = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium
+              <label htmlFor="employee-joining-date" className="text-sm font-medium
                 text-gray-700">
                 Joining Date
               </label>
               <input
+                id="employee-joining-date"
                 type="date"
                 {...register('joiningDate')}
                 className={`w-full px-4 py-2.5 rounded-lg
