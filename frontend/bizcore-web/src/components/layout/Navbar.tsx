@@ -60,6 +60,7 @@ const Navbar = () => {
 
         {/* Desktop sidebar toggle */}
         <button
+          aria-label="Toggle sidebar"
           onClick={toggleSidebar}
           className="hidden lg:flex items-center justify-center
             w-9 h-9 rounded-xl transition-colors
@@ -71,6 +72,7 @@ const Navbar = () => {
 
         {/* Mobile sidebar toggle */}
         <button
+          aria-label="Open navigation"
           onClick={toggleMobileSidebar}
           className="flex lg:hidden items-center justify-center
             w-9 h-9 rounded-xl transition-colors
@@ -96,6 +98,7 @@ const Navbar = () => {
 
         {/* ── Theme Toggle Button ── */}
         <button
+          aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           onClick={toggleTheme}
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           className="
@@ -132,19 +135,11 @@ const Navbar = () => {
           )}
         </button>
 
-        {/* Notification bell */}
-        <button className="relative w-9 h-9 rounded-xl
-          flex items-center justify-center transition-colors
-          text-gray-500 hover:bg-gray-100
-          dark:text-slate-400 dark:hover:bg-slate-800">
-          🔔
-          <span className="absolute top-1.5 right-1.5
-            w-2 h-2 bg-red-500 rounded-full" />
-        </button>
-
         {/* Profile dropdown */}
         <div className="relative" ref={profileRef}>
           <button
+            aria-label="Account menu"
+            aria-expanded={isProfileOpen}
             onClick={() => setIsProfileOpen(!isProfileOpen)}
             className="flex items-center gap-2 px-2 py-1.5 rounded-xl
               transition-colors hover:bg-gray-100
@@ -207,11 +202,7 @@ const Navbar = () => {
               {/* Menu items */}
               <div className="py-1">
                 <DropdownItem icon="👤" label="My Profile"
-                  onClick={() => { navigate('/profile'); setIsProfileOpen(false); }} />
-                <DropdownItem icon="⚙️" label="Settings"
-                  onClick={() => { navigate('/settings'); setIsProfileOpen(false); }} />
-                <DropdownItem icon="🔒" label="Change Password"
-                  onClick={() => { navigate('/change-password'); setIsProfileOpen(false); }} />
+                  onClick={() => { navigate('/my-profile'); setIsProfileOpen(false); }} />
               </div>
 
               {/* Logout */}

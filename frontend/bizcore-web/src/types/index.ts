@@ -191,6 +191,8 @@ export interface LeaveBalanceResponse {
   totalDays:     number;
   usedDays:      number;
   remainingDays: number;
+  pendingDays?:  number;
+  availableDays?: number;
   year:          number;
 }
 
@@ -244,4 +246,17 @@ export interface ApplyLeaveRequest {
   startDate:   string;
   endDate:     string;
   reason:      string;
+}
+
+export interface OverviewResponse {
+  scope: string;
+  date: string;
+  activeEmployees: number;
+  departments: number;
+  clockInsToday: number;
+  pendingRequests: number;
+  onLeaveToday: number;
+  attendanceDaysThisMonth: number;
+  approvedDaysThisYear: number;
+  hasEmployeeProfile: boolean;
 }

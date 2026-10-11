@@ -32,6 +32,8 @@ public class LeaveRequestConfiguration
         builder.Property(l => l.CreatedAt)
             .HasDefaultValueSql("NOW()");
 
+        builder.Property(l => l.ReviewedByName).HasMaxLength(201);
+
         // Employee who applied
         builder.HasOne(l => l.Employee)
             .WithMany(e => e.LeaveRequests)

@@ -20,13 +20,16 @@ No schema migration is introduced by this milestone. Existing accounts and recor
 
 ## Milestone 2 — complete leave management
 
-The UI calls `/api/hr/leave`, `/approve`, and `/reject`, but there is no matching controller. Do not simply expose the existing handlers unchanged:
+Implemented in the HR completion update:
 
-- Derive the approver from the authenticated account; the UI currently supplies the applicant's employee ID as approver.
-- Decide how a company administrator without an employee profile approves leave.
-- Prevent self-approval, cross-company decisions, invalid date ranges, unsupported cross-year requests, and balance overspending.
-- Make decisions and balance changes atomic under concurrent requests.
-- Implement leave-type/balance setup, employee application/history UI, and approval/rejection endpoints with tests.
+- Server-derived reviewer identity, including company administrators without an employee profile; self-review and cross-company decisions are denied.
+- Annual leave policy creation, lazy per-year balances, employee application/history/cancellation, and review endpoints with responsive screens.
+- Whole weekdays, date/overlap checks, pending balance reservation, and atomic decisions under per-employee PostgreSQL transaction locks.
+- A non-destructive migration adds reviewer account ID/name while retaining historical employee reviewer links.
+- Handler tests, frontend failure/retry tests, and real PostgreSQL browser/API tests for competing applications and duplicate approvals.
+- Company/personal dashboard figures now come from the API. Navigation exposes working modules, and attendance has CSV export.
+
+Remaining policy features: holidays, half-days, carryover, proration, policy editing, and approved-leave cancellation.
 
 ## Milestone 3 — finish administration and tenant boundaries
 
@@ -35,16 +38,16 @@ The UI calls `/api/hr/leave`, `/approve`, and `/reject`, but there is no matchin
 - Finish department update, employee edit/deactivate, and user password reset/change.
 - Verify employee/user links and employee-code generation under concurrent creation.
 - Review salary visibility, stale role claims outside the hardened HR endpoints, token storage/revocation, and audit logs.
-- Remove hardcoded/sample dashboard metrics or label them clearly; align role-specific dashboards and vendor routes with real capabilities.
+- Continue reviewing the platform-wide SuperAdmin experience; the company/employee overview now uses real records.
 
 ## Milestone 4 — real database and deployment checks
 
 - Added a PostgreSQL 16 + Chromium CI workflow for registration, login, employee creation/linking, mobile attendance and immediate link revocation. It starts the API twice against the same schema. See [TESTING.md](TESTING.md) for manual and automated checks.
-- Still needed: dedicated constraint/concurrency tests, existing-record persistence assertions across process restarts, and the wider tenant audit.
-- Add host configuration, CORS environment settings, health checks, Docker/Render and Vercel configuration.
+- Leave balance concurrency is now exercised against PostgreSQL. Still needed: broader constraint/concurrency tests, existing-record persistence assertions across process restarts, and the wider tenant audit.
+- Render frontend/API and Neon PostgreSQL are deployed, with Docker, CORS, and a process health endpoint. See DEPLOYMENT.md.
 - Verify persistence after restart, database backup/restore, responsive layouts, and keyboard interactions.
 - Define company timezones, shifts, overnight attendance, and correction approval before payroll use.
 
 ## Later modules
 
-Projects, inventory, purchasing/vendors, and finance currently have placeholder pages. Build one complete business workflow at a time after HR is stable. Billing, an embeddable module, and a complete ERP are not delivered by milestone 1.
+Projects, inventory, purchasing/vendors, and finance remain planned and are hidden from main navigation. Build one complete business workflow at a time after HR is stable. Billing, an embeddable module, and a complete ERP are not delivered by milestone 1.

@@ -75,12 +75,12 @@ const EmployeesPage = () => {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             Employees
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
             {data?.totalCount ?? 0} total employees
           </p>
         </div>
@@ -90,8 +90,8 @@ const EmployeesPage = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border
-        border-gray-100 shadow-sm p-4 mb-6
+      <div className="bg-white dark:bg-slate-900 rounded-xl border
+        border-gray-100 dark:border-slate-800 shadow-sm p-4 mb-6
         flex flex-col sm:flex-row gap-3">
 
         <div className="flex-1 relative">
@@ -103,7 +103,7 @@ const EmployeesPage = () => {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 border
-              border-gray-200 rounded-lg text-sm
+              border-gray-200 dark:border-slate-700 rounded-lg text-sm
               focus:outline-none focus:ring-2
               focus:ring-primary-500"
           />
@@ -112,8 +112,8 @@ const EmployeesPage = () => {
         <select
           value={deptFilter}
           onChange={(e) => { setDeptFilter(e.target.value); setPage(1); }}
-          className="px-4 py-2 border border-gray-200
-            rounded-lg text-sm bg-white focus:outline-none
+          className="px-4 py-2 border border-gray-200 dark:border-slate-700
+            rounded-lg text-sm bg-white dark:bg-slate-900 focus:outline-none
             focus:ring-2 focus:ring-primary-500"
         >
           <option value="">All Departments</option>
@@ -142,25 +142,25 @@ const EmployeesPage = () => {
       )}
 
       {/* Table */}
-      <div className="bg-white rounded-xl border
-        border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border
+        border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
 
         {isLoading ? (
           <div className="p-8 text-center">
             <div className="w-8 h-8 border-4
               border-primary-600 border-t-transparent
               rounded-full animate-spin mx-auto" />
-            <p className="text-gray-500 text-sm mt-3">
+            <p className="text-gray-500 dark:text-slate-400 text-sm mt-3">
               Loading employees...
             </p>
           </div>
         ) : data?.items.length === 0 ? (
           <div className="p-12 text-center">
             <div className="text-4xl mb-3">👤</div>
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold text-gray-900 dark:text-slate-100">
               No employees found
             </h3>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
               Add your first employee to get started
             </p>
           </div>
@@ -169,14 +169,14 @@ const EmployeesPage = () => {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="bg-gray-50 border-b
-                    border-gray-100">
+                  <tr className="bg-gray-50 dark:bg-slate-800/50 border-b
+                    border-gray-100 dark:border-slate-800">
                     {['Employee', 'Department',
                       'Designation', 'System Access',
                       'Status', 'Actions'].map((h) => (
                       <th key={h} className="text-left
                         px-6 py-3 text-xs font-semibold
-                        text-gray-500 uppercase
+                        text-gray-500 dark:text-slate-400 uppercase
                         tracking-wider">
                         {h}
                       </th>
@@ -184,10 +184,10 @@ const EmployeesPage = () => {
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                   {data?.items.map((emp) => (
                     <tr key={emp.id}
-                      className="hover:bg-gray-50
+                      className="hover:bg-gray-50 dark:bg-slate-800/50
                         transition-colors">
 
                       {/* Employee info */}
@@ -205,10 +205,10 @@ const EmployeesPage = () => {
                           </div>
                           <div>
                             <p className="text-sm font-medium
-                              text-gray-900">
+                              text-gray-900 dark:text-slate-100">
                               {emp.fullName}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-slate-400">
                               {emp.employeeCode} • {emp.email}
                             </p>
                           </div>
@@ -218,7 +218,7 @@ const EmployeesPage = () => {
                       {/* Department */}
                       <td className="px-6 py-4">
                         <span className="text-sm
-                          text-gray-700 bg-gray-100
+                          text-gray-700 dark:text-slate-300 bg-gray-100
                           px-2.5 py-1 rounded-full">
                           {emp.departmentName}
                         </span>
@@ -226,7 +226,7 @@ const EmployeesPage = () => {
 
                       {/* Designation */}
                       <td className="px-6 py-4 text-sm
-                        text-gray-700">
+                        text-gray-700 dark:text-slate-300">
                         {emp.designation}
                       </td>
 
@@ -310,9 +310,9 @@ const EmployeesPage = () => {
             {/* Pagination */}
             {data && data.totalPages > 1 && (
               <div className="px-6 py-4 border-t
-                border-gray-100 flex items-center
+                border-gray-100 dark:border-slate-800 flex items-center
                 justify-between">
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-slate-400">
                   {data.totalCount} employees total
                 </p>
                 <div className="flex items-center gap-2">
@@ -321,7 +321,7 @@ const EmployeesPage = () => {
                     onClick={() => setPage(p => p - 1)}>
                     ← Previous
                   </Button>
-                  <span className="text-sm text-gray-600 px-2">
+                  <span className="text-sm text-gray-600 dark:text-slate-300 px-2">
                     Page {page} of {data.totalPages}
                   </span>
                   <Button variant="secondary" size="sm"

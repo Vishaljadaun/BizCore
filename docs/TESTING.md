@@ -86,7 +86,7 @@ Opening `localhost` on your phone refers to the phone, not your computer. Use **
 
 ## What is outside this test
 
-Leave management is incomplete: listing and approval/rejection routes are missing. Projects, inventory, vendors and finance are placeholders. Some dashboard figures are examples. This workflow does not establish complete tenant isolation, payroll accuracy, concurrency safety, or production readiness. See [the completion plan](COMPLETION.md).
+The browser workflow now also covers mobile leave applications, admin approval/rejection, employee cancellation, CSV download, company overview counts, and simultaneous leave applications/duplicate decisions. Projects, inventory, vendors and finance remain planned. These checks do not establish complete tenant isolation, payroll accuracy, concurrency safety outside leave, or production readiness. See [the completion plan](COMPLETION.md).
 
 ## Troubleshooting
 
@@ -94,3 +94,16 @@ Leave management is incomplete: listing and approval/rejection routes are missin
 - **Browser cannot reach the API:** check both terminals and `VITE_API_BASE_URL=http://localhost:5001/api`. Restart Vite after changing its environment file.
 - **Employee has no profile:** create the employee and grant/link their login access from the administrator account.
 - **Browser test fails:** open the HTML report and inspect the failing step/trace. Check the API startup logs for migration errors instead of treating a page timeout as a frontend failure.
+
+
+## Try leave management and reporting
+
+1. As the company administrator, open **HR Module → Leave Management**. Add a policy such as `Annual leave`, with 12 days per year.
+2. In the employee browser, open **My Leave**. Pick a weekday in the current or next year, choose the policy, and submit a reason. Check that pending days increase and available days decrease.
+3. As admin, approve the request. Refresh the employee page: the status, reviewer, and used days should update. Try another request and reject it with a reason, then try cancelling a pending request as the employee.
+4. Check **Dashboard**: company counts reflect your records; the employee sees their own attendance and leave metrics.
+5. Open **Attendance**, select a date, and choose **Export CSV**. It contains all matching records for the chosen day/filter, including records on other table pages.
+
+Leave uses whole Monday–Friday days without public-holiday exclusions or carryover. A request cannot span calendar years. Admins and managers can also apply using a linked employee profile, but another reviewer must decide their request.
+
+The CI browser report includes desktop dashboard and 390px mobile leave screenshots. The PostgreSQL test concurrently requests the last available leave day and submits two approvals of one request: only one application and one decision may succeed.

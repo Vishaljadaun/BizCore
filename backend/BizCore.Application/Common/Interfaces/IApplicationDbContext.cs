@@ -27,6 +27,8 @@ namespace BizCore.Application.Common.Interfaces
         DbSet<LeaveRequest> LeaveRequests { get; }
         DbSet<Attendance> Attendances { get; }
 
+        Task<T> WithEmployeeLockAsync<T>(Guid employeeId, Func<Task<T>> action, CancellationToken ct);
+
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }

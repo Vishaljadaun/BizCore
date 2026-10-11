@@ -31,6 +31,7 @@ const AttendancePage = () => {
   const [clockingId,  setClockingId]  =
     useState<string | null>(null);
 
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch employees for filter
@@ -90,16 +91,30 @@ const AttendancePage = () => {
     }
   };
 
+  const exportCsv = async () => {
+    if (!dateFilter) return;
+    setExporting(true); setError(null);
+    try {
+      const blob = await hrApi.exportAttendance({ from: dateFilter, to: dateFilter, employeeId: empFilter || undefined });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url; link.download = `attendance-${dateFilter}.csv`;
+      document.body.appendChild(link); link.click(); link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { setError('Unable to export attendance. Please retry or select fewer records.'); }
+    finally { setExporting(false); }
+  };
+
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             Attendance
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Track employee attendance and working hours
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
+            Track attendance and working hours. Dates use UTC; times display in your local timezone.
           </p>
         </div>
       </div>
@@ -107,7 +122,12 @@ const AttendancePage = () => {
       {error && <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
         {error} <Button variant="secondary" size="sm" onClick={() => void fetchAttendance()}>Retry</Button>
       </div>}
-      {/* Today's Summary */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-gray-500 dark:text-slate-400">{isLoading ? 'Loading records…' : `${data?.totalCount ?? 0} matching records`} · Export includes every matching record for the selected date.</p>
+        <Button variant="secondary" disabled={!dateFilter || isLoading} isLoading={exporting} onClick={() => void exportCsv()}>Export CSV</Button>
+      </div>
+      {/* Counts describe the displayed page, not the entire company. */}
+      <p className="mb-2 text-xs text-gray-500 dark:text-slate-400">Status counts on this page</p>
       <div className="grid grid-cols-2 md:grid-cols-4
         gap-4 mb-6">
         {[
@@ -145,7 +165,7 @@ const AttendancePage = () => {
             <p className={`text-2xl font-bold ${stat.color}`}>
               {stat.value}
             </p>
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600 dark:text-slate-300 mt-1">
               {stat.label}
             </p>
           </div>
@@ -153,24 +173,26 @@ const AttendancePage = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border
-        border-gray-100 shadow-sm p-4 mb-6
+      <div className="bg-white dark:bg-slate-900 rounded-xl border
+        border-gray-100 dark:border-slate-800 shadow-sm p-4 mb-6
         flex flex-col sm:flex-row gap-3">
 
         <input
+          aria-label="Attendance date"
           type="date"
           value={dateFilter}
           onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
-          className="px-4 py-2 border border-gray-200
+          className="px-4 py-2 border border-gray-200 dark:border-slate-700
             rounded-lg text-sm focus:outline-none
             focus:ring-2 focus:ring-primary-500"
         />
 
         <select
+          aria-label="Filter by employee"
           value={empFilter}
           onChange={(e) => { setEmpFilter(e.target.value); setPage(1); }}
-          className="flex-1 px-4 py-2 border border-gray-200
-            rounded-lg text-sm bg-white focus:outline-none
+          className="min-w-0 flex-1 px-4 py-2 border border-gray-200 dark:border-slate-700
+            rounded-lg text-sm bg-white dark:bg-slate-900 focus:outline-none
             focus:ring-2 focus:ring-primary-500"
         >
           <option value="">All Employees</option>
@@ -185,7 +207,7 @@ const AttendancePage = () => {
           onClick={() => {
             setDateFilter(
               new Date().toISOString().split('T')[0]);
-            setEmpFilter('');
+            setEmpFilter(''); setPage(1);
           }}>
           Today
         </Button>
@@ -202,8 +224,8 @@ const AttendancePage = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border
-        border-gray-100 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border
+        border-gray-100 dark:border-slate-800 shadow-sm overflow-hidden">
 
         {isLoading ? (
           <div className="p-8 text-center">
@@ -214,10 +236,10 @@ const AttendancePage = () => {
         ) : data?.items.length === 0 ? (
           <div className="p-12 text-center">
             <div className="text-4xl mb-3">⏰</div>
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="font-semibold text-gray-900 dark:text-slate-100">
               No attendance records
             </h3>
-            <p className="text-gray-500 text-sm mt-1">
+            <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
               No records found for selected date
             </p>
           </div>
@@ -225,14 +247,14 @@ const AttendancePage = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gray-50 border-b
-                  border-gray-100">
+                <tr className="bg-gray-50 dark:bg-slate-800/50 border-b
+                  border-gray-100 dark:border-slate-800">
                   {['Employee', 'Date', 'Clock In',
                     'Clock Out', 'Hours', 'Status',
                     'Actions'].map((h) => (
                     <th key={h} className="text-left
                       px-6 py-3 text-xs font-semibold
-                      text-gray-500 uppercase
+                      text-gray-500 dark:text-slate-400 uppercase
                       tracking-wider">
                       {h}
                     </th>
@@ -240,10 +262,10 @@ const AttendancePage = () => {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-gray-50 dark:divide-slate-800">
                 {data?.items.map((att) => (
                   <tr key={att.id}
-                    className="hover:bg-gray-50
+                    className="hover:bg-gray-50 dark:bg-slate-800/50
                       transition-colors">
 
                     {/* Employee */}
@@ -262,7 +284,7 @@ const AttendancePage = () => {
                           </span>
                         </div>
                         <span className="text-sm
-                          font-medium text-gray-900">
+                          font-medium text-gray-900 dark:text-slate-100">
                           {att.employeeName}
                         </span>
                       </div>
@@ -270,7 +292,7 @@ const AttendancePage = () => {
 
                     {/* Date */}
                     <td className="px-6 py-4 text-sm
-                      text-gray-600">
+                      text-gray-600 dark:text-slate-300">
                       {new Date(att.date)
                         .toLocaleDateString('en-IN', {
                           day:     '2-digit',
@@ -281,7 +303,7 @@ const AttendancePage = () => {
 
                     {/* Clock In */}
                     <td className="px-6 py-4 text-sm
-                      text-gray-700 font-mono">
+                      text-gray-700 dark:text-slate-300 font-mono">
                       {new Date(att.clockIn)
                         .toLocaleTimeString('en-IN', {
                           hour:   '2-digit',
@@ -293,7 +315,7 @@ const AttendancePage = () => {
                     <td className="px-6 py-4 text-sm
                       font-mono">
                       {att.clockOut ? (
-                        <span className="text-gray-700">
+                        <span className="text-gray-700 dark:text-slate-300">
                           {new Date(att.clockOut)
                             .toLocaleTimeString('en-IN', {
                               hour:   '2-digit',
@@ -331,7 +353,7 @@ const AttendancePage = () => {
                       <span className={`px-2.5 py-1
                         rounded-full text-xs font-medium
                         ${statusColor[att.status] ||
-                          'bg-gray-100 text-gray-700'
+                          'bg-gray-100 text-gray-700 dark:text-slate-300'
                         }`}>
                         {att.status}
                       </span>
@@ -362,7 +384,7 @@ const AttendancePage = () => {
         )}
       </div>
       {data && data.totalPages > 1 && <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-sm text-gray-500">Page {page} of {data.totalPages} · {data.totalCount} records</span>
+        <span className="text-sm text-gray-500 dark:text-slate-400">Page {page} of {data.totalPages} · {data.totalCount} records</span>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" disabled={isLoading || page <= 1} onClick={() => setPage(value => value - 1)}>Previous</Button>
           <Button variant="secondary" size="sm" disabled={isLoading || page >= data.totalPages} onClick={() => setPage(value => value + 1)}>Next</Button>

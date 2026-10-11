@@ -79,7 +79,9 @@ public record LeaveBalanceResponse(
     int TotalDays,
     int UsedDays,
     int RemainingDays,
-    int Year
+    int Year,
+    int PendingDays = 0,
+    int AvailableDays = 0
 );
 
 // ── Leave Request DTOs ────────────────────────────────
@@ -104,15 +106,6 @@ public record ApplyLeaveRequest(
     DateOnly StartDate,
     DateOnly EndDate,
     string Reason
-);
-
-public record ApproveLeaveRequest(
-    Guid ApproverEmployeeId
-);
-
-public record RejectLeaveRequest(
-    Guid ApproverEmployeeId,
-    string RejectionReason
 );
 
 // ── Attendance DTOs ───────────────────────────────────

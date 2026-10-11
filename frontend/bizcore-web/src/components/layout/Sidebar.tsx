@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLayoutStore }               from '../../store/layoutStore';
 import { useAuthStore }                 from '../../store/authStore';
 import { navigation, vendorNavigation } from '../../config/navigation';
@@ -9,6 +10,12 @@ const Sidebar = () => {
     useLayoutStore();
   const { user } = useAuthStore();
 
+  const expanded = isSidebarOpen || isMobileSidebarOpen;
+  useEffect(() => {
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') closeMobileSidebar(); };
+    if (isMobileSidebarOpen) document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [isMobileSidebarOpen, closeMobileSidebar]);
   const navItems =
     user?.role === UserRole.Vendor ? vendorNavigation : navigation;
 
@@ -30,7 +37,7 @@ const Sidebar = () => {
         bg-white border-r border-gray-200
         dark:bg-slate-900 dark:border-slate-700/60
 
-        ${isSidebarOpen ? 'w-64' : 'w-16'}
+        ${expanded ? 'w-64' : 'w-16'}
 
         lg:relative lg:translate-x-0
 
@@ -45,14 +52,14 @@ const Sidebar = () => {
           flex items-center flex-shrink-0
           transition-all duration-300
           border-b border-gray-100 dark:border-slate-700/60
-          ${isSidebarOpen ? 'px-4 py-4 gap-3' : 'px-2 py-4 justify-center'}
+          ${expanded ? 'px-4 py-4 gap-3' : 'px-2 py-4 justify-center'}
         `}>
           <div className="w-9 h-9 bg-primary-600 rounded-xl flex
             items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-lg">B</span>
           </div>
 
-          {isSidebarOpen && (
+          {expanded && (
             <div className="overflow-hidden">
               <p className="font-bold text-sm leading-tight
                 text-gray-900 dark:text-slate-100">
@@ -66,13 +73,14 @@ const Sidebar = () => {
           )}
         </div>
 
+        {isMobileSidebarOpen && <button onClick={closeMobileSidebar} aria-label="Close navigation" className="absolute right-2 top-5 rounded-lg p-2 text-gray-600 dark:text-slate-300 lg:hidden">✕</button>}
         {/* ── Navigation ────────────────────────────────────────────── */}
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
           {navItems.map((item) => (
             <NavItemComponent
               key={item.path}
               item={item}
-              isCollapsed={!isSidebarOpen}
+              isCollapsed={!expanded}
             />
           ))}
         </nav>
@@ -84,7 +92,7 @@ const Sidebar = () => {
             flex items-center gap-3 p-2 rounded-xl cursor-pointer
             transition-colors
             hover:bg-gray-50 dark:hover:bg-slate-800
-            ${isSidebarOpen ? '' : 'justify-center'}
+            ${expanded ? '' : 'justify-center'}
           `}>
             <div className="w-8 h-8 rounded-full bg-primary-600
               flex items-center justify-center flex-shrink-0">
@@ -93,7 +101,7 @@ const Sidebar = () => {
               </span>
             </div>
 
-            {isSidebarOpen && (
+            {expanded && (
               <div className="overflow-hidden flex-1">
                 <p className="text-sm font-medium truncate
                   text-gray-900 dark:text-slate-100">

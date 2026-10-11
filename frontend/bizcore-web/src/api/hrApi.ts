@@ -1,6 +1,8 @@
 import axiosClient from './axiosClient';
 import type {
   DepartmentResponse,
+  LeaveTypeResponse,
+  OverviewResponse,
   EmployeeResponse,
   LeaveBalanceResponse,
   LeaveRequestResponse,
@@ -128,23 +130,26 @@ export const hrApi = {
     return res.data;
   },
 
-  approveLeave: async (
-    leaveId:            string,
-    approverEmployeeId: string
-  ): Promise<void> => {
-    await axiosClient.put(
-      `/hr/leave/${leaveId}/approve`,
-      { approverEmployeeId });
+  approveLeave: async (leaveId: string): Promise<void> => {
+    await axiosClient.put(`/hr/leave/${leaveId}/approve`);
   },
-
-  rejectLeave: async (
-    leaveId:            string,
-    approverEmployeeId: string,
-    rejectionReason:    string
-  ): Promise<void> => {
-    await axiosClient.put(
-      `/hr/leave/${leaveId}/reject`,
-      { approverEmployeeId, rejectionReason });
+  rejectLeave: async (leaveId: string, rejectionReason: string): Promise<void> => {
+    await axiosClient.put(`/hr/leave/${leaveId}/reject`, { rejectionReason });
+  },
+  cancelLeave: async (leaveId: string): Promise<void> => {
+    await axiosClient.put(`/hr/leave/${leaveId}/cancel`);
+  },
+  getLeaveTypes: async (): Promise<LeaveTypeResponse[]> => {
+    return (await axiosClient.get('/hr/leave/types')).data;
+  },
+  createLeaveType: async (data: { name: string; daysAllowed: number }): Promise<LeaveTypeResponse> => {
+    return (await axiosClient.post('/hr/leave/types', data)).data;
+  },
+  getOverview: async (): Promise<OverviewResponse> => {
+    return (await axiosClient.get('/hr/overview')).data;
+  },
+  exportAttendance: async (params: { from: string; to: string; employeeId?: string }): Promise<Blob> => {
+    return (await axiosClient.get('/hr/attendance/export', { params, responseType: 'blob' })).data;
   },
 
   // ── Attendance ───────────────────────────────────────

@@ -1,208 +1,85 @@
-﻿namespace BizCore.Application.HR.Leaves;
+namespace BizCore.Application.HR.Leaves;
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
-using BizCore.Application.HR.Access;
 using BizCore.Application.Common.Models;
+using BizCore.Application.HR.Access;
 using BizCore.Application.HR.DTOs;
 using BizCore.Domain.Entities.HR;
 using BizCore.Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using ValidationException = Common.Exceptions.ValidationException;
 
-// ── Command ───────────────────────────────────────────
-public record ApplyLeaveCommand(
-    Guid EmployeeId,
-    Guid LeaveTypeId,
-    DateOnly StartDate,
-    DateOnly EndDate,
-    string Reason
-) : IRequest<Result<LeaveRequestResponse>>;
+public record ApplyLeaveCommand(Guid EmployeeId, Guid LeaveTypeId, DateOnly StartDate,
+    DateOnly EndDate, string Reason) : IRequest<Result<LeaveRequestResponse>>;
 
-// ── Handler ───────────────────────────────────────────
-public class ApplyLeaveCommandHandler
-    : IRequestHandler<ApplyLeaveCommand,
-        Result<LeaveRequestResponse>>
+public class ApplyLeaveCommandHandler(IApplicationDbContext db, ICurrentUserService current)
+    : IRequestHandler<ApplyLeaveCommand, Result<LeaveRequestResponse>>
 {
-    private readonly IApplicationDbContext _context;
-    private readonly ICurrentUserService _currentUser;
-
-    public ApplyLeaveCommandHandler(
-        IApplicationDbContext context,
-        ICurrentUserService currentUser)
+    public async Task<Result<LeaveRequestResponse>> Handle(ApplyLeaveCommand command, CancellationToken ct)
     {
-        _context = context;
-        _currentUser = currentUser;
+        var caller = await EmployeeAccess.GetCallerAsync(db, current, ct);
+        var employee = await EmployeeAccess.RequireAsync(db, caller, command.EmployeeId, ct);
+        // Applications are self-service, including for managers and administrators.
+        if (caller.EmployeeId != employee.Id || employee.UserId != caller.Id)
+            throw new ForbiddenAccessException("Apply using your own linked employee profile.");
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (command.StartDate < today || command.EndDate < command.StartDate ||
+            command.StartDate.Year != command.EndDate.Year || command.StartDate.Year > today.Year + 1)
+            return Result<LeaveRequestResponse>.Failure("Choose future dates in the same calendar year (this year or next year).");
+        if (string.IsNullOrWhiteSpace(command.Reason) || command.Reason.Trim().Length > 500)
+            return Result<LeaveRequestResponse>.Failure("Enter a reason of 1–500 characters.");
+        var days = WorkingDays(command.StartDate, command.EndDate);
+        if (days == 0) return Result<LeaveRequestResponse>.Failure("Choose at least one weekday. Weekends do not use leave.");
+
+        return await db.WithEmployeeLockAsync(employee.Id, async () =>
+        {
+            var type = await db.LeaveTypes.AsNoTracking().FirstOrDefaultAsync(x =>
+                x.Id == command.LeaveTypeId && x.CompanyId == caller.CompanyId && x.IsActive, ct)
+                ?? throw new NotFoundException("Leave type", command.LeaveTypeId);
+            if (await db.LeaveRequests.AnyAsync(x => x.CompanyId == caller.CompanyId &&
+                x.EmployeeId == employee.Id && (x.Status == LeaveStatus.Pending || x.Status == LeaveStatus.Approved) &&
+                x.StartDate <= command.EndDate && x.EndDate >= command.StartDate, ct))
+                return Result<LeaveRequestResponse>.Failure("An existing pending or approved request overlaps these dates.", 409);
+            var balance = await db.LeaveBalances.FirstOrDefaultAsync(x => x.CompanyId == caller.CompanyId &&
+                x.EmployeeId == employee.Id && x.LeaveTypeId == type.Id && x.Year == command.StartDate.Year, ct);
+            var pending = await db.LeaveRequests.Where(x => x.CompanyId == caller.CompanyId &&
+                x.EmployeeId == employee.Id && x.LeaveTypeId == type.Id && x.StartDate.Year == command.StartDate.Year &&
+                x.Status == LeaveStatus.Pending).SumAsync(x => x.TotalDays, ct);
+            var available = (balance?.TotalDays ?? type.DaysAllowed) - (balance?.UsedDays ?? 0) - pending;
+            if (days > available)
+                return Result<LeaveRequestResponse>.Failure($"Only {available} days are available after pending requests.", 409);
+            if (balance == null)
+                db.LeaveBalances.Add(new LeaveBalance { Id = Guid.NewGuid(), CompanyId = employee.CompanyId,
+                    EmployeeId = employee.Id, LeaveTypeId = type.Id, Year = command.StartDate.Year, TotalDays = type.DaysAllowed });
+            var request = new LeaveRequest { Id = Guid.NewGuid(), CompanyId = employee.CompanyId,
+                EmployeeId = employee.Id, LeaveTypeId = type.Id, StartDate = command.StartDate,
+                EndDate = command.EndDate, TotalDays = days, Reason = command.Reason.Trim() };
+            db.LeaveRequests.Add(request);
+            await db.SaveChangesAsync(ct);
+            return Result<LeaveRequestResponse>.Success(new(request.Id, employee.Id, employee.FullName,
+                type.Name, request.StartDate, request.EndDate, days, request.Reason, "Pending", null, null, null, request.CreatedAt), 201);
+        }, ct);
     }
 
-    public async Task<Result<LeaveRequestResponse>> Handle(
-        ApplyLeaveCommand command,
-        CancellationToken cancellationToken)
+    public static int WorkingDays(DateOnly start, DateOnly end)
     {
-        var companyId = _currentUser.CompanyId
-            ?? throw new ForbiddenAccessException(
-                "Company context not found.");
-
-        // Validate dates
-        if (command.EndDate < command.StartDate)
-            throw new ValidationException(
-                new[] {
-                    new FluentValidation.Results
-                        .ValidationFailure(
-                        "EndDate",
-                        "End date cannot be before start date.")
-                });
-
-        // Calculate working days
-        var totalDays = CalculateWorkingDays(
-            command.StartDate, command.EndDate);
-
-        if (totalDays <= 0)
-            throw new ValidationException(
-                new[] {
-                    new FluentValidation.Results
-                        .ValidationFailure(
-                        "Dates",
-                        "Leave must be at least 1 working day.")
-                });
-
-        // Check employee exists
-        var caller = await EmployeeAccess.GetCallerAsync(_context, _currentUser, cancellationToken);
-        await EmployeeAccess.RequireAsync(_context, caller, command.EmployeeId, cancellationToken);
-
-        var employee = await _context.Employees
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(e =>
-                e.Id == command.EmployeeId &&
-                e.CompanyId == companyId,
-                cancellationToken);
-
-        if (employee == null)
-            throw new NotFoundException(
-                "Employee", command.EmployeeId);
-
-        // Check leave type exists
-        var leaveType = await _context.LeaveTypes
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(lt =>
-                lt.Id == command.LeaveTypeId &&
-                lt.CompanyId == companyId &&
-                lt.IsActive,
-                cancellationToken);
-
-        if (leaveType == null)
-            throw new NotFoundException(
-                "LeaveType", command.LeaveTypeId);
-
-        // Check leave balance
-        var balance = await _context.LeaveBalances
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(lb =>
-                lb.EmployeeId == command.EmployeeId &&
-                lb.LeaveTypeId == command.LeaveTypeId &&
-                lb.Year == command.StartDate.Year,
-                cancellationToken);
-
-        if (balance == null)
-            return Result<LeaveRequestResponse>.Failure(
-                "No leave balance found for this year.");
-
-        var remainingDays = balance.TotalDays - balance.UsedDays;
-        if (remainingDays < totalDays)
-            return Result<LeaveRequestResponse>.Failure(
-                $"Insufficient leave balance. " +
-                $"Available: {remainingDays} days, " +
-                $"Requested: {totalDays} days.");
-
-        // Check no overlapping leave request
-        var overlapping = await _context.LeaveRequests
-            .IgnoreQueryFilters()
-            .AnyAsync(lr =>
-                lr.EmployeeId == command.EmployeeId &&
-                lr.Status != LeaveStatus.Rejected &&
-                lr.Status != LeaveStatus.Cancelled &&
-                lr.StartDate <= command.EndDate &&
-                lr.EndDate >= command.StartDate,
-                cancellationToken);
-
-        if (overlapping)
-            return Result<LeaveRequestResponse>.Failure(
-                "You already have a leave request " +
-                "for overlapping dates.");
-
-        // Create leave request
-        var leaveRequest = new LeaveRequest
-        {
-            Id = Guid.NewGuid(),
-            CompanyId = companyId,
-            EmployeeId = command.EmployeeId,
-            LeaveTypeId = command.LeaveTypeId,
-            StartDate = command.StartDate,
-            EndDate = command.EndDate,
-            TotalDays = totalDays,
-            Reason = command.Reason.Trim(),
-            Status = LeaveStatus.Pending,
-        };
-
-        await _context.LeaveRequests
-            .AddAsync(leaveRequest, cancellationToken);
-        await _context.SaveChangesAsync(cancellationToken);
-
-        return Result<LeaveRequestResponse>.Success(
-            new LeaveRequestResponse(
-                leaveRequest.Id,
-                employee.Id,
-                employee.FullName,
-                leaveType.Name,
-                leaveRequest.StartDate,
-                leaveRequest.EndDate,
-                leaveRequest.TotalDays,
-                leaveRequest.Reason,
-                leaveRequest.Status.ToString(),
-                null, null, null,
-                leaveRequest.CreatedAt
-            ), 201);
-    }
-
-    // Calculate working days (exclude weekends)
-    private static int CalculateWorkingDays(
-        DateOnly start, DateOnly end)
-    {
-        int days = 0;
-        var current = start;
-        while (current <= end)
-        {
-            if (current.DayOfWeek != DayOfWeek.Saturday &&
-                current.DayOfWeek != DayOfWeek.Sunday)
-                days++;
-            current = current.AddDays(1);
-        }
+        var days = 0;
+        for (var day = start.DayNumber; day <= end.DayNumber; day++)
+            if (DateOnly.FromDayNumber(day).DayOfWeek is not (DayOfWeek.Saturday or DayOfWeek.Sunday)) days++;
         return days;
     }
 }
 
-// ── Validator ─────────────────────────────────────────
-public class ApplyLeaveCommandValidator
-    : AbstractValidator<ApplyLeaveCommand>
+public class ApplyLeaveCommandValidator : AbstractValidator<ApplyLeaveCommand>
 {
     public ApplyLeaveCommandValidator()
     {
-        RuleFor(x => x.EmployeeId)
-            .NotEmpty().WithMessage("Employee is required.");
-
-        RuleFor(x => x.LeaveTypeId)
-            .NotEmpty().WithMessage("Leave type is required.");
-
-        RuleFor(x => x.StartDate)
-            .NotEmpty().WithMessage("Start date is required.");
-
-        RuleFor(x => x.EndDate)
-            .NotEmpty().WithMessage("End date is required.");
-
-        RuleFor(x => x.Reason)
-            .NotEmpty().WithMessage("Reason is required.")
-            .MaximumLength(500).WithMessage("Max 500 characters.");
+        RuleFor(x => x.EmployeeId).NotEmpty();
+        RuleFor(x => x.LeaveTypeId).NotEmpty();
+        RuleFor(x => x.StartDate).NotEmpty();
+        RuleFor(x => x.EndDate).NotEmpty();
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
     }
 }

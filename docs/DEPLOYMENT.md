@@ -65,8 +65,7 @@ around a minute; wait for the request to finish before submitting again. Records
 live in Neon, so an API restart does not erase them. Free plans have usage limits
 and are appropriate for this portfolio preview; no paid upgrade is configured.
 
-This deployment exposes the existing learning project. Leave management and
-the placeholder modules listed in [COMPLETION.md](COMPLETION.md) remain unfinished.
+This deployment exposes a learning project with working employee, attendance, and leave workflows. Projects, inventory, vendors, and finance remain planned; see [COMPLETION.md](COMPLETION.md).
 
 ## Updating
 
