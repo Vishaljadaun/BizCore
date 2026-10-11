@@ -75,4 +75,4 @@ key and database configuration unchanged across routine deployments.
 
 ## Manual live verification
 
-The **Check live portfolio deployment** GitHub Actions workflow runs on demand. It checks public frontend delivery, API health, CORS, registration, employee linking, attendance and revocation. Each run creates one clearly named fictional `Deployment Check` company in the hosted database; it does not delete records or use real customer data. The regular CI browser workflow still uses its own disposable PostgreSQL database.
+The **Check live portfolio deployment** GitHub Actions workflow runs on demand. It checks public frontend delivery, API health, CORS, registration, employee linking, attendance/CSV export, leave application/review/balances, dashboard counts, and revocation. Each run creates one clearly named fictional `Deployment Check` company in the hosted database; it does not delete records or use real customer data. The regular CI browser workflow still uses its own disposable PostgreSQL database.

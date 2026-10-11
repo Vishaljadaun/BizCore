@@ -29,11 +29,11 @@ public class CreateLeaveTypeCommandHandler(IApplicationDbContext db, ICurrentUse
         if (string.IsNullOrWhiteSpace(command.Name) || command.Name.Trim().Length > 50 || command.DaysAllowed is < 1 or > 366)
             return Result<LeaveTypeResponse>.Failure("Enter a name (up to 50 characters) and 1–366 annual days.");
         // Company-wide lock serializes policy creation, including case-insensitive duplicates.
-        return await db.WithEmployeeLockAsync(caller.CompanyId!.Value, async () => {
+        return await db.WithEmployeeLockAsync(caller.CompanyId, async () => {
             var name = command.Name.Trim();
             if (await db.LeaveTypes.AnyAsync(x => x.CompanyId == caller.CompanyId && x.Name.ToLower() == name.ToLower(), ct))
                 return Result<LeaveTypeResponse>.Failure("A leave type with that name already exists.", 409);
-            var type = new LeaveType { Id = Guid.NewGuid(), CompanyId = caller.CompanyId.Value, Name = name, DaysAllowed = command.DaysAllowed };
+            var type = new LeaveType { Id = Guid.NewGuid(), CompanyId = caller.CompanyId, Name = name, DaysAllowed = command.DaysAllowed };
             db.LeaveTypes.Add(type);
             await db.SaveChangesAsync(ct);
             return Result<LeaveTypeResponse>.Success(new(type.Id, type.Name, type.DaysAllowed, true), 201);
