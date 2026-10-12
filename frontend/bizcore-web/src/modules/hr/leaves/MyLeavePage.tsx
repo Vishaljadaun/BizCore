@@ -80,7 +80,7 @@ export default function MyLeavePage() {
     </section> : employee && <>
       <section aria-label="Leave balances" className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-semibold">Your balance</h2>
-          <label className={`flex items-center gap-2 ${muted}`}>Balance year<select className={field} value={year} onChange={e => setYear(Number(e.target.value))}><option>{currentYear}</option><option>{currentYear + 1}</option></select></label></div>
+          <div className={`flex items-center gap-2 ${muted}`}><label htmlFor="balance-year" className="whitespace-nowrap">Balance year</label><select id="balance-year" className={field} value={year} onChange={e => setYear(Number(e.target.value))}><option>{currentYear}</option><option>{currentYear + 1}</option></select></div></div>
         {balances.length === 0 ? <p className={panel}>Your administrator needs to add a leave policy before you can apply.</p> : <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{balances.map(balance => <div key={balance.leaveTypeId} className={panel}>
           <p className="font-medium">{balance.leaveTypeName}</p><p className="mt-3 text-3xl font-bold text-primary-600 dark:text-primary-400">{balance.availableDays ?? balance.remainingDays}<span className={`ml-2 font-normal ${muted}`}>available</span></p>
           <p className={`mt-2 ${muted}`}>{balance.usedDays} used · {balance.pendingDays ?? 0} pending · {balance.totalDays} total</p>

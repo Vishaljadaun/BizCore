@@ -43,3 +43,11 @@ it('shows a dashboard failure instead of invented zero metrics and can recover',
   await waitFor(() => expect(screen.getByLabelText('Overview metrics')).toBeTruthy());
   expect(screen.getByText('7')).toBeTruthy();
 });
+
+it('labels the balance year selector and fetches the selected annual balance', async () => {
+  render(<MemoryRouter><MyLeavePage /></MemoryRouter>);
+  const selector = await screen.findByLabelText('Balance year', { exact: true });
+  const nextYear = new Date().getUTCFullYear() + 1;
+  fireEvent.change(selector, { target: { value: String(nextYear) } });
+  await waitFor(() => expect(hrApi.getLeaveBalances).toHaveBeenCalledWith('employee', nextYear));
+});
