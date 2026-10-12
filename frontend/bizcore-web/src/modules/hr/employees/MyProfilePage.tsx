@@ -303,7 +303,7 @@ const MyProfilePage = () => {
           <div className="bg-white rounded-2xl border
             border-gray-100 shadow-sm p-6">
             <h3 className="font-semibold text-gray-900 mb-4">
-              Leave Balance {new Date().getFullYear()}
+              Available Leave {new Date().getUTCFullYear()}
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3
@@ -317,7 +317,7 @@ const MyProfilePage = () => {
                   <div className="flex items-end gap-1">
                     <span className="text-2xl font-bold
                       text-gray-900">
-                      {bal.remainingDays}
+                      {bal.availableDays ?? bal.remainingDays}
                     </span>
                     <span className="text-sm text-gray-400
                       mb-0.5">
@@ -330,12 +330,12 @@ const MyProfilePage = () => {
                       className="h-full bg-primary-500
                         rounded-full"
                       style={{
-                        width: `${bal.totalDays > 0 ? Math.max(0, Math.min(100, (bal.remainingDays / bal.totalDays) * 100)) : 0}%`
+                        width: `${bal.totalDays > 0 ? Math.max(0, Math.min(100, ((bal.availableDays ?? bal.remainingDays) / bal.totalDays) * 100)) : 0}%`
                       }}
                     />
                   </div>
                   <p className="text-xs text-gray-400 mt-1">
-                    {bal.usedDays} used
+                    {bal.usedDays} used · {bal.pendingDays ?? 0} pending
                   </p>
                 </div>
               ))}

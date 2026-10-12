@@ -121,6 +121,7 @@ test('company onboarding, mobile employee attendance and immediate access revoca
       await expect(page.getByText('Leave approved and balance updated.')).toBeVisible();
       await employeePage.reload();
       await expect(employeePage.getByText('Approved', { exact: true })).toBeVisible();
+      await employeePage.getByLabel('Balance year', { exact: true }).selectOption(String(leaveYear));
       await expect(employeePage.getByText('1 used · 0 pending · 10 total')).toBeVisible();
       await expect(employeePage.getByText('Reviewed by Demo Admin')).toBeVisible();
       await employeePage.getByLabel('Leave type', { exact: true }).selectOption({ label: 'Annual leave' });
