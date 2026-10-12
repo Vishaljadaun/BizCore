@@ -54,6 +54,7 @@ public class CreateUserCommandHandler
             throw new ForbiddenAccessException(
                 "Company context not found.");
 
+        return await _context.WithEmployeeLockAsync(companyId.Value, async () => {
         // ── Guard: Cannot create SuperAdmin ───────────────────────────
         // SuperAdmin is only created via DB seeder
         // No endpoint should allow creating SuperAdmin
@@ -146,6 +147,7 @@ public class CreateUserCommandHandler
             ), statusCode: 201);
         // 201 Created = resource was successfully created
         // Controller uses this status code in the response
+        }, cancellationToken);
     }
 }
 

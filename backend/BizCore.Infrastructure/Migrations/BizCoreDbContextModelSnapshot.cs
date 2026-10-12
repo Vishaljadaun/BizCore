@@ -515,6 +515,9 @@ namespace BizCore.Infrastructure.Migrations
 
             modelBuilder.Entity("BizCore.Domain.Entities.User", b =>
                 {
+                    b.Property<int>("CredentialVersion").HasColumnType("integer");
+                    b.Property<bool>("MustChangePassword").HasColumnType("boolean");
+
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")

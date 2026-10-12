@@ -1,125 +1,18 @@
-import { useState }    from 'react';
-import { useForm }     from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z }           from 'zod';
-import { AxiosError }  from 'axios';
-import { hrApi }       from '../../../api/hrApi';
-import Input           from '../../../components/shared/Input';
-import Button          from '../../../components/shared/Button';
-
-const schema = z.object({
-  name: z.string()
-    .min(1, 'Department name is required')
-    .max(100, 'Max 100 characters'),
-  description: z.string()
-    .max(500, 'Max 500 characters')
-    .optional(),
-});
-
-type FormData = z.infer<typeof schema>;
-
-interface Props {
-  onClose:   () => void;
-  onSuccess: () => void;
+import { useEffect, useState } from 'react';
+import { hrApi } from '../../../api/hrApi';
+import type { DepartmentResponse, EmployeeResponse } from '../../../types';
+import { Dialog, fieldClass, primary, muted } from '../../operations/ui';
+import { errorText } from '../../operations/errors';
+export default function CreateDepartmentModal({ department, onClose, onSuccess }: { department?: DepartmentResponse; onClose: () => void; onSuccess: () => void }) {
+  const [name, setName] = useState(department?.name || ''); const [description, setDescription] = useState(department?.description || '');
+  const [managerId, setManager] = useState(department?.managerId || ''); const [search, setSearch] = useState(''); const [people, setPeople] = useState<EmployeeResponse[]>([]);
+  const [error, setError] = useState(''); const [lookupError, setLookupError] = useState(''); const [busy, setBusy] = useState(false);
+  useEffect(() => { if (!department) return; let active = true; const timer = setTimeout(() => { hrApi.getEmployees({ search, isActive: true, pageSize: 100 }).then(data => { if (active) { setPeople(data.items); setLookupError(''); } }).catch(err => { if (active) setLookupError(errorText(err)); }); }, 200); return () => { active = false; clearTimeout(timer); }; }, [search, department]);
+  return <Dialog title={department ? 'Edit Department' : 'Create Department'} close={onClose} busy={busy}><form className="space-y-4" onSubmit={async e => { e.preventDefault(); setBusy(true); setError(''); try { if (department) await hrApi.updateDepartment(department.id, { name, description: description || null, managerId: managerId || null }); else await hrApi.createDepartment({ name, description: description || null }); onSuccess(); } catch (err) { setError(errorText(err)); } finally { setBusy(false); } }}>
+    {error && <p role="alert" className="text-red-600 text-sm">{error}</p>}
+    <label className="block text-sm">Department Name<input className={fieldClass + ' mt-1'} required maxLength={100} value={name} onChange={e => setName(e.target.value)} /></label>
+    <label className="block text-sm">Description (Optional)<textarea className={fieldClass + ' mt-1'} maxLength={500} rows={3} value={description} onChange={e => setDescription(e.target.value)} /></label>
+    {department && <div className="space-y-2"><label className="block text-sm">Search manager<input className={fieldClass + ' mt-1'} value={search} onChange={e => setSearch(e.target.value)} placeholder="Find an active employee" /></label><label className="block text-sm">Department manager<select className={fieldClass + ' mt-1'} value={managerId} onChange={e => setManager(e.target.value)}><option value="">No manager</option>{managerId && !people.some(p => p.id === managerId) && <option value={managerId}>{department.managerName || 'Current manager'}</option>}{people.map(p => <option key={p.id} value={p.id}>{p.fullName} · {p.employeeCode}</option>)}</select></label>{people.length === 100 && <p className={muted}>Showing 100 matches. Narrow your search.</p>}{lookupError && <p role="alert" className="text-sm text-red-600">{lookupError} Change the search to retry.</p>}</div>}
+    <button className={primary} disabled={busy}>{busy ? 'Saving…' : department ? 'Save Department' : 'Create Department'}</button>
+  </form></Dialog>;
 }
-
-const CreateDepartmentModal = ({ onClose, onSuccess }: Props) => {
-  const [serverError, setServerError] =
-    useState<string | null>(null);
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
-
-  const onSubmit = async (data: FormData) => {
-    try {
-      setServerError(null);
-      await hrApi.createDepartment({
-        name:        data.name,
-        description: data.description || null,
-      });
-      onSuccess();
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        setServerError(
-          error.response?.data?.message ||
-          'Failed to create department.'
-        );
-      }
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50
-      flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl
-        w-full max-w-md animate-fade-in">
-
-        <div className="flex items-center justify-between
-          px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Create Department
-          </h2>
-          <button onClick={onClose}
-            className="text-gray-400 hover:text-gray-600
-              w-8 h-8 flex items-center justify-center
-              rounded-lg hover:bg-gray-100">
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)}
-          className="p-6 flex flex-col gap-4" noValidate>
-
-          {serverError && (
-            <div className="bg-red-50 border border-red-200
-              rounded-lg p-3 text-red-700 text-sm">
-              ⚠ {serverError}
-            </div>
-          )}
-
-          <Input
-            label="Department Name"
-            placeholder="Engineering, Sales, HR..."
-            error={errors.name?.message}
-            {...register('name')}
-          />
-
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">
-              Description (Optional)
-            </label>
-            <textarea
-              {...register('description')}
-              placeholder="Brief description of this department..."
-              rows={3}
-              className="w-full px-4 py-2.5 rounded-lg border
-                border-gray-300 text-sm focus:outline-none
-                focus:ring-2 focus:ring-primary-500 resize-none"
-            />
-            {errors.description && (
-              <span className="text-xs text-red-500">
-                {errors.description.message}
-              </span>
-            )}
-          </div>
-
-          <div className="flex gap-3 mt-2">
-            <Button type="button" variant="secondary"
-              fullWidth onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" fullWidth
-              isLoading={isSubmitting}>
-              Create Department
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-export default CreateDepartmentModal;

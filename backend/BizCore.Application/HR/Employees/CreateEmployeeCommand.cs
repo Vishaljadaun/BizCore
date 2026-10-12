@@ -46,6 +46,7 @@ public class CreateEmployeeCommandHandler
             ?? throw new ForbiddenAccessException(
                 "Company context not found.");
 
+        return await _context.WithEmployeeLockAsync(companyId, async () => {
         // ── Option 1: userId provided → link existing user ──
         if (command.UserId.HasValue)
         {
@@ -61,6 +62,9 @@ public class CreateEmployeeCommandHandler
                 throw new NotFoundException(
                     "User", command.UserId.Value);
 
+            if (!user.IsActive || user.Role == BizCore.Domain.Enums.UserRole.Vendor)
+                throw new BizCore.Application.Common.Exceptions.ValidationException("userId", "Choose an active staff account.");
+            if (user.EmployeeId.HasValue) throw new ConflictException("User is already linked to an employee.");
             // Check user not already linked to another employee
             var alreadyLinked = await _context.Employees
                 .IgnoreQueryFilters()
@@ -95,7 +99,7 @@ public class CreateEmployeeCommandHandler
                 d.CompanyId == companyId,
                 cancellationToken);
 
-        if (department == null)
+        if (department == null || !department.IsActive)
             throw new NotFoundException(
                 "Department", command.DepartmentId);
 
@@ -128,6 +132,11 @@ public class CreateEmployeeCommandHandler
         await _context.Employees
             .AddAsync(employee, cancellationToken);
 
+        if (command.UserId.HasValue)
+        {
+            var linked = await _context.Users.IgnoreQueryFilters().SingleAsync(x => x.Id == command.UserId && x.CompanyId == companyId, cancellationToken);
+            linked.EmployeeId = employee.Id;
+        }
         // Auto create leave balances for current year
         var currentYear = DateTime.UtcNow.Year;
         var leaveTypes = await _context.LeaveTypes
@@ -172,6 +181,7 @@ public class CreateEmployeeCommandHandler
                 employee.UserId,
                 employee.CreatedAt
             ), 201);
+        }, cancellationToken);
     }
 }
 

@@ -20,6 +20,8 @@ namespace BizCore.Domain.Entities
 
         public UserRole Role { get; set; } = UserRole.Employee;
         public bool IsActive { get; set; } = true;
+        public int CredentialVersion { get; set; }
+        public bool MustChangePassword { get; set; }
         public DateTime? LastLogin { get; set; }
 
         // ── New: Link to HR Employee profile ──────────────

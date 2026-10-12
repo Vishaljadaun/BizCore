@@ -6,6 +6,7 @@ import { UserRole }                 from '../types';
 // lazy() = code splitting — each page is a separate JS chunk
 // The chunk is downloaded only when the user navigates to that page
 // Benefit: faster initial app load (don't download all pages upfront)
+const AccountSecurityPage = lazy(() => import('../modules/auth/AccountSecurityPage'));
 const LoginPage      = lazy(() => import('../modules/auth/LoginPage'));
 const RegisterPage   = lazy(() => import('../modules/auth/RegisterPage'));
 const AppLayout      = lazy(() => import('../components/layout/AppLayout'));
@@ -64,6 +65,7 @@ const AppRoutes = () => {
           <Route element={<AppLayout />}>
 
             {/* Dashboard — all authenticated roles */}
+            <Route path="/account-security" element={<AccountSecurityPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
 
             {/* ── HR MODULE ─────────────────────────────────────────── */}

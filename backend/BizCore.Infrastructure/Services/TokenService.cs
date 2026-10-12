@@ -45,6 +45,7 @@ namespace BizCore.Infrastructure.Services
                     user.Role.ToString()),
                 new Claim("company_id",
                     user.CompanyId.ToString()),
+                new Claim("credential_version", user.CredentialVersion.ToString()),
                 new Claim("first_name", user.FirstName),
                 new Claim("last_name", user.LastName),
             };

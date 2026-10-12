@@ -1,4 +1,6 @@
-﻿namespace BizCore.Application.Users.Commands;
+using BizCore.Application.Security;
+using BizCore.Domain.Enums;
+namespace BizCore.Application.Users.Commands;
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
@@ -22,10 +24,12 @@ public class UpdateUserCommandHandler
     : IRequestHandler<UpdateUserCommand, Result<UserResponse>>
 {
     private readonly IApplicationDbContext _context;
+    private readonly ICurrentUserService _currentUser;
 
-    public UpdateUserCommandHandler(IApplicationDbContext context)
+    public UpdateUserCommandHandler(IApplicationDbContext context, ICurrentUserService currentUser)
     {
         _context = context;
+        _currentUser = currentUser;
     }
 
     public async Task<Result<UserResponse>> Handle(
@@ -33,18 +37,14 @@ public class UpdateUserCommandHandler
         CancellationToken cancellationToken)
     {
         // Find user — global filter ensures same company
-        var user = await _context.Users
-            .FirstOrDefaultAsync(
-                u => u.Id == command.UserId,
-                cancellationToken);
+        return await AccountAccess.Mutate(_context, _currentUser, command.UserId, async (caller, user) => {
 
-        if (user == null)
-            throw new NotFoundException(nameof(User), command.UserId);
 
         // Check email uniqueness if email changed
         if (user.Email != command.Email.ToLower().Trim())
         {
-            var emailTaken = _context.Users.Any(u =>
+            var emailTaken = _context.Users.IgnoreQueryFilters().Any(u =>
+                u.CompanyId == user.CompanyId &&
                 u.Email == command.Email.ToLower().Trim() &&
                 u.Id != command.UserId);
             // Exclude current user from check
@@ -76,6 +76,7 @@ public class UpdateUserCommandHandler
                 user.LastLogin,
                 user.UpdatedAt
             ));
+        }, cancellationToken);
     }
 }
 
@@ -98,6 +99,6 @@ public class UpdateUserCommandValidator
 
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email is required.")
-            .EmailAddress().WithMessage("Invalid email format.");
+            .EmailAddress().WithMessage("Invalid email format.").MaximumLength(255);
     }
 }

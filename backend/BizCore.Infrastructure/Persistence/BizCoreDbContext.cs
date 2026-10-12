@@ -76,6 +76,12 @@ namespace BizCore.Infrastructure.Persistence
         public async Task<T> WithEmployeeLockAsync<T>(Guid employeeId, Func<Task<T>> action, CancellationToken ct)
         {
             if (!Database.IsRelational()) return await action(); // InMemory unit tests
+            if (Database.CurrentTransaction != null)
+            {
+                await Database.ExecuteSqlInterpolatedAsync(
+                    $"SELECT pg_advisory_xact_lock(hashtextextended({employeeId.ToString()}, 0))", ct);
+                return await action();
+            }
             await using var transaction = await Database.BeginTransactionAsync(ct);
             await Database.ExecuteSqlInterpolatedAsync(
                 $"SELECT pg_advisory_xact_lock(hashtextextended({employeeId.ToString()}, 0))", ct);

@@ -12,7 +12,8 @@ public record RegisterCompanyRequest(
 
 public record LoginRequest(
     string Email,
-    string Password
+    string Password,
+    string? CompanyCode = null
 );
 
 public record RefreshTokenRequest(
@@ -36,5 +37,7 @@ public record UserDto(
     string Email,
     string Role,
     Guid CompanyId,
-    string CompanyName
+    string CompanyName,
+    string CompanyCode = "",
+    bool MustChangePassword = false
 );
