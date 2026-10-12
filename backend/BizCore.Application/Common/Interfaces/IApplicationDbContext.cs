@@ -1,4 +1,5 @@
-﻿using BizCore.Domain.Entities;
+using BizCore.Domain.Entities.Operations;
+using BizCore.Domain.Entities;
 using BizCore.Domain.Entities.HR;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -14,6 +15,20 @@ namespace BizCore.Application.Common.Interfaces
     // This is the Dependency Inversion principle
     public interface IApplicationDbContext
     {
+        DbSet<WorkProject> WorkProjects { get; }
+        DbSet<ProjectTask> ProjectTasks { get; }
+        DbSet<TimeEntry> TimeEntries { get; }
+        DbSet<Supplier> Suppliers { get; }
+        DbSet<SupplierContract> SupplierContracts { get; }
+        DbSet<Product> Products { get; }
+        DbSet<PurchaseOrder> PurchaseOrders { get; }
+        DbSet<PurchaseLine> PurchaseLines { get; }
+        DbSet<StockMovement> StockMovements { get; }
+        DbSet<Invoice> Invoices { get; }
+        DbSet<InvoiceLine> InvoiceLines { get; }
+        DbSet<InvoicePayment> InvoicePayments { get; }
+        DbSet<Expense> Expenses { get; }
+
         DbSet<Company> Companies { get; }
         DbSet<User> Users { get; }
         DbSet<RefreshToken> RefreshTokens { get; }

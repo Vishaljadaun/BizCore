@@ -39,6 +39,7 @@ namespace BizCore.Application
             services.AddValidatorsFromAssembly(
                 Assembly.GetExecutingAssembly());
 
+            services.AddScoped<BizCore.Application.Operations.OperationsService>();
             return services;
         }
     }

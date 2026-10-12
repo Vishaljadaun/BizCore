@@ -713,6 +713,268 @@ namespace BizCore.Infrastructure.Migrations
                 {
                     b.Navigation("RefreshTokens");
                 });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.WorkProject", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("Name").IsRequired().HasColumnType("character varying(150)");
+                b.Property<string>("Description").IsRequired().HasColumnType("character varying(2000)");
+                b.Property<DateOnly?>("DueDate").HasColumnType("date");
+                b.Property<string>("Status").IsRequired().HasColumnType("character varying(20)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.ToTable("WorkProject", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.ProjectTask", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<Guid>("ProjectId").HasColumnType("uuid");
+                b.Property<string>("Title").IsRequired().HasColumnType("character varying(200)");
+                b.Property<string>("Description").IsRequired().HasColumnType("character varying(2000)");
+                b.Property<Guid?>("AssignedUserId").HasColumnType("uuid");
+                b.Property<DateOnly?>("DueDate").HasColumnType("date");
+                b.Property<string>("Priority").IsRequired().HasColumnType("character varying(20)");
+                b.Property<string>("Status").IsRequired().HasColumnType("character varying(20)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "ProjectId");
+                b.ToTable("ProjectTask", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.TimeEntry", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<Guid>("TaskId").HasColumnType("uuid");
+                b.Property<Guid>("UserId").HasColumnType("uuid");
+                b.Property<DateOnly>("Date").HasColumnType("date");
+                b.Property<int>("Minutes").HasColumnType("integer");
+                b.Property<string>("Note").IsRequired().HasColumnType("character varying(1000)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "TaskId");
+                b.ToTable("TimeEntry", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Supplier", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("Name").IsRequired().HasColumnType("character varying(150)");
+                b.Property<string>("Email").IsRequired().HasColumnType("character varying(256)");
+                b.Property<string>("Phone").IsRequired().HasColumnType("character varying(40)");
+                b.Property<string>("Address").IsRequired().HasColumnType("character varying(1000)");
+                b.Property<Guid?>("PortalUserId").HasColumnType("uuid");
+                b.Property<bool>("IsActive").HasColumnType("boolean");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "PortalUserId").IsUnique();
+                b.ToTable("Supplier", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.SupplierContract", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<Guid>("SupplierId").HasColumnType("uuid");
+                b.Property<string>("Title").IsRequired().HasColumnType("character varying(200)");
+                b.Property<string>("Terms").IsRequired().HasColumnType("character varying(4000)");
+                b.Property<DateOnly>("StartDate").HasColumnType("date");
+                b.Property<DateOnly>("EndDate").HasColumnType("date");
+                b.Property<decimal>("Value").HasColumnType("numeric(18,2)");
+                b.Property<string>("Status").IsRequired().HasColumnType("character varying(20)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "SupplierId");
+                b.ToTable("SupplierContract", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Product", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("Sku").IsRequired().HasColumnType("character varying(50)");
+                b.Property<string>("Name").IsRequired().HasColumnType("character varying(150)");
+                b.Property<string>("Unit").IsRequired().HasColumnType("character varying(30)");
+                b.Property<int>("ReorderLevel").HasColumnType("integer");
+                b.Property<int>("OnHand").HasColumnType("integer");
+                b.Property<decimal>("UnitCost").HasColumnType("numeric(18,2)");
+                b.Property<bool>("IsActive").HasColumnType("boolean");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "Sku").IsUnique();
+                b.ToTable("Product", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.PurchaseOrder", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("Number").IsRequired().HasColumnType("character varying(30)");
+                b.Property<Guid>("SupplierId").HasColumnType("uuid");
+                b.Property<DateOnly?>("ExpectedDate").HasColumnType("date");
+                b.Property<string>("Notes").IsRequired().HasColumnType("character varying(1000)");
+                b.Property<string>("Status").IsRequired().HasColumnType("character varying(20)");
+                b.Property<decimal>("Total").HasColumnType("numeric(18,2)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "SupplierId");
+                b.HasIndex("CompanyId", "Number").IsUnique();
+                b.ToTable("PurchaseOrder", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.PurchaseLine", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<Guid>("OrderId").HasColumnType("uuid");
+                b.Property<Guid>("ProductId").HasColumnType("uuid");
+                b.Property<int>("Quantity").HasColumnType("integer");
+                b.Property<decimal>("UnitCost").HasColumnType("numeric(18,2)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "OrderId");
+                b.HasIndex("CompanyId", "ProductId");
+                b.ToTable("PurchaseLine", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.StockMovement", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<Guid>("ProductId").HasColumnType("uuid");
+                b.Property<Guid?>("OrderId").HasColumnType("uuid");
+                b.Property<Guid>("UserId").HasColumnType("uuid");
+                b.Property<int>("Delta").HasColumnType("integer");
+                b.Property<int>("BalanceAfter").HasColumnType("integer");
+                b.Property<string>("Reason").IsRequired().HasColumnType("character varying(500)");
+                b.Property<Guid>("RequestId").HasColumnType("uuid");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "ProductId");
+                b.HasIndex("CompanyId", "OrderId");
+                b.HasIndex("CompanyId", "RequestId").IsUnique();
+                b.ToTable("StockMovement", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Invoice", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("Number").IsRequired().HasColumnType("character varying(30)");
+                b.Property<string>("CustomerName").IsRequired().HasColumnType("character varying(150)");
+                b.Property<string>("CustomerEmail").IsRequired().HasColumnType("character varying(256)");
+                b.Property<DateOnly>("IssueDate").HasColumnType("date");
+                b.Property<DateOnly>("DueDate").HasColumnType("date");
+                b.Property<string>("Notes").IsRequired().HasColumnType("character varying(1000)");
+                b.Property<string>("Status").IsRequired().HasColumnType("character varying(20)");
+                b.Property<decimal>("TaxPercent").HasColumnType("numeric(5,2)");
+                b.Property<decimal>("Subtotal").HasColumnType("numeric(18,2)");
+                b.Property<decimal>("Total").HasColumnType("numeric(18,2)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "Number").IsUnique();
+                b.ToTable("Invoice", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.InvoiceLine", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<Guid>("InvoiceId").HasColumnType("uuid");
+                b.Property<string>("Description").IsRequired().HasColumnType("character varying(300)");
+                b.Property<decimal>("Quantity").HasColumnType("numeric(12,2)");
+                b.Property<decimal>("UnitPrice").HasColumnType("numeric(18,2)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "InvoiceId");
+                b.ToTable("InvoiceLine", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.InvoicePayment", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<Guid>("InvoiceId").HasColumnType("uuid");
+                b.Property<decimal>("Amount").HasColumnType("numeric(18,2)");
+                b.Property<DateOnly>("Date").HasColumnType("date");
+                b.Property<string>("Reference").IsRequired().HasColumnType("character varying(200)");
+                b.Property<Guid>("RequestId").HasColumnType("uuid");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "InvoiceId");
+                b.HasIndex("CompanyId", "RequestId").IsUnique();
+                b.ToTable("InvoicePayment", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Expense", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("CompanyId").HasColumnType("uuid");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("UpdatedAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("Description").IsRequired().HasColumnType("character varying(500)");
+                b.Property<string>("Category").IsRequired().HasColumnType("character varying(80)");
+                b.Property<Guid?>("SupplierId").HasColumnType("uuid");
+                b.Property<Guid?>("OrderId").HasColumnType("uuid");
+                b.Property<decimal>("Amount").HasColumnType("numeric(18,2)");
+                b.Property<DateOnly>("Date").HasColumnType("date");
+                b.Property<DateOnly?>("PaidDate").HasColumnType("date");
+                b.Property<string>("Status").IsRequired().HasColumnType("character varying(20)");
+                b.HasKey("Id");
+                b.HasAlternateKey("CompanyId", "Id");
+                b.HasIndex("CompanyId");
+                b.HasIndex("CompanyId", "SupplierId");
+                b.HasIndex("CompanyId", "OrderId");
+                b.HasIndex("CompanyId", "OrderId").IsUnique();
+                b.ToTable("Expense", "ops");
+            });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Product").ToTable("Product", "ops", t => t.HasCheckConstraint("CK_Product_Values", "\"OnHand\" >= 0 AND \"ReorderLevel\" >= 0 AND \"UnitCost\" >= 0"));
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.TimeEntry").ToTable("TimeEntry", "ops", t => t.HasCheckConstraint("CK_TimeEntry_Values", "\"Minutes\" > 0 AND \"Minutes\" <= 1440"));
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.PurchaseLine").ToTable("PurchaseLine", "ops", t => t.HasCheckConstraint("CK_PurchaseLine_Values", "\"Quantity\" > 0 AND \"UnitCost\" >= 0"));
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.InvoiceLine").ToTable("InvoiceLine", "ops", t => t.HasCheckConstraint("CK_InvoiceLine_Values", "\"Quantity\" > 0 AND \"UnitPrice\" >= 0"));
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.InvoicePayment").ToTable("InvoicePayment", "ops", t => t.HasCheckConstraint("CK_InvoicePayment_Values", "\"Amount\" > 0"));
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Expense").ToTable("Expense", "ops", t => t.HasCheckConstraint("CK_Expense_Values", "\"Amount\" > 0"));
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.StockMovement").ToTable("StockMovement", "ops", t => t.HasCheckConstraint("CK_StockMovement_Values", "\"Delta\" <> 0 AND \"BalanceAfter\" >= 0"));
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Invoice").ToTable("Invoice", "ops", t => t.HasCheckConstraint("CK_Invoice_Values", "\"Total\" >= 0 AND \"TaxPercent\" >= 0 AND \"TaxPercent\" <= 100"));
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.ProjectTask", b => { b.HasOne("BizCore.Domain.Entities.Operations.WorkProject", null).WithMany().HasForeignKey("CompanyId", "ProjectId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.TimeEntry", b => { b.HasOne("BizCore.Domain.Entities.Operations.ProjectTask", null).WithMany().HasForeignKey("CompanyId", "TaskId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.SupplierContract", b => { b.HasOne("BizCore.Domain.Entities.Operations.Supplier", null).WithMany().HasForeignKey("CompanyId", "SupplierId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.PurchaseOrder", b => { b.HasOne("BizCore.Domain.Entities.Operations.Supplier", null).WithMany().HasForeignKey("CompanyId", "SupplierId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.PurchaseLine", b => { b.HasOne("BizCore.Domain.Entities.Operations.PurchaseOrder", null).WithMany().HasForeignKey("CompanyId", "OrderId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.PurchaseLine", b => { b.HasOne("BizCore.Domain.Entities.Operations.Product", null).WithMany().HasForeignKey("CompanyId", "ProductId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.StockMovement", b => { b.HasOne("BizCore.Domain.Entities.Operations.Product", null).WithMany().HasForeignKey("CompanyId", "ProductId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.StockMovement", b => { b.HasOne("BizCore.Domain.Entities.Operations.PurchaseOrder", null).WithMany().HasForeignKey("CompanyId", "OrderId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.InvoiceLine", b => { b.HasOne("BizCore.Domain.Entities.Operations.Invoice", null).WithMany().HasForeignKey("CompanyId", "InvoiceId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.InvoicePayment", b => { b.HasOne("BizCore.Domain.Entities.Operations.Invoice", null).WithMany().HasForeignKey("CompanyId", "InvoiceId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict).IsRequired(); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Expense", b => { b.HasOne("BizCore.Domain.Entities.Operations.Supplier", null).WithMany().HasForeignKey("CompanyId", "SupplierId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict); });
+            modelBuilder.Entity("BizCore.Domain.Entities.Operations.Expense", b => { b.HasOne("BizCore.Domain.Entities.Operations.PurchaseOrder", null).WithMany().HasForeignKey("CompanyId", "OrderId").HasPrincipalKey("CompanyId", "Id").OnDelete(DeleteBehavior.Restrict); });
 #pragma warning restore 612, 618
         }
     }
