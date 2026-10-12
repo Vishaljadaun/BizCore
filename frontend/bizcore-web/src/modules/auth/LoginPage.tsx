@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm }           from 'react-hook-form';
 import { zodResolver }       from '@hookform/resolvers/zod';
 import { z }                 from 'zod';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AxiosError }        from 'axios';
 import { authApi }           from '../../api/authApi';
 import { useAuthStore }      from '../../store/authStore';
@@ -26,7 +26,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 // ── LoginPage ──────────────────────────────────────────────────────────────
 const LoginPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const notice = useAuthStore(s => s.notice);
   const login                           = useAuthStore((state) => state.login);
   const [serverError,  setServerError]  = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -338,7 +338,7 @@ const LoginPage = () => {
             </p>
           </div>
 
-          {location.state?.passwordChanged && <p role="status" className="mb-4 text-emerald-300">Password changed. Sign in with your new password.</p>}
+          {notice && <p role="status" className="mb-4 text-emerald-300">{notice}</p>}
           {/* Server error */}
           {serverError && (
             <div className="bg-rose-500/10 border border-rose-500/30
