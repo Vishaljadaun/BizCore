@@ -66,6 +66,7 @@ public partial class OperationsService
     {
         var u = await Caller("staff", ct); var q = db.TimeEntries.AsNoTracking().Where(x => x.CompanyId == u.CompanyId);
         if (!Manager(u) || o.Mine) q = q.Where(x => x.UserId == u.Id);
+        if (!string.IsNullOrWhiteSpace(o.Search)) q = q.Where(x => x.Note.ToLower().Contains(o.Search.ToLower()) || db.ProjectTasks.Any(t => t.Id == x.TaskId && t.CompanyId == u.CompanyId && t.Title.ToLower().Contains(o.Search.ToLower())));
         if (o.ParentId.HasValue) q = q.Where(x => db.ProjectTasks.Any(t => t.Id == x.TaskId && t.CompanyId == u.CompanyId && t.ProjectId == o.ParentId));
         return await Page(q.OrderByDescending(x => x.Date).ThenByDescending(x => x.CreatedAt).Select(x => new { x.Id, x.TaskId, x.UserId, x.Date, x.Minutes, x.Note,
             TaskTitle = db.ProjectTasks.Where(t => t.Id == x.TaskId && t.CompanyId == u.CompanyId).Select(t => t.Title).FirstOrDefault(),

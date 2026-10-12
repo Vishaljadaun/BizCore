@@ -65,13 +65,11 @@ around a minute; wait for the request to finish before submitting again. Records
 live in Neon, so an API restart does not erase them. Free plans have usage limits
 and are appropriate for this portfolio preview; no paid upgrade is configured.
 
-This deployment exposes a learning project with working employee, attendance, and leave workflows. Projects, inventory, vendors, and finance remain planned; see [COMPLETION.md](COMPLETION.md).
+The deployment includes HR, Projects, Inventory, Vendors, and Finance core workflows. See [OPERATIONS.md](OPERATIONS.md) for a guided demo and scope.
 
 ## Updating
 
-Both Render services track `main` and deploy new commits automatically. Check
-GitHub Actions and the service deploy logs after merging a change. Keep the JWT
-key and database configuration unchanged across routine deployments.
+Both Render services track `main`. Although auto-deploy is enabled, recent merges did not trigger builds on these services. After CI passes and the PR is merged, check the deployed commit in Render; if it is still the old commit, use **Manual Deploy → Deploy latest commit** on the API and static site. Wait for both to be live, then run the live check. Keep the JWT key and database configuration unchanged across routine deployments.
 
 ## Manual live verification
 

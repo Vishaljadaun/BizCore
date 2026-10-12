@@ -81,6 +81,7 @@ public partial class OperationsService
     {
         var u = await Caller("manage", ct); var q = db.StockMovements.AsNoTracking().Where(x => x.CompanyId == u.CompanyId);
         if (o.ParentId.HasValue) q = q.Where(x => x.ProductId == o.ParentId);
+        if (!string.IsNullOrWhiteSpace(o.Search)) q = q.Where(x => x.Reason.ToLower().Contains(o.Search.ToLower()) || db.Products.Any(p => p.Id == x.ProductId && p.CompanyId == u.CompanyId && p.Name.ToLower().Contains(o.Search.ToLower())));
         return await Page(q.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Select(x => new { x.Id, x.ProductId, x.OrderId, x.Delta, x.BalanceAfter, x.Reason, x.CreatedAt,
             ProductName = db.Products.Where(p => p.CompanyId == u.CompanyId && p.Id == x.ProductId).Select(p => p.Name).FirstOrDefault() }), o, ct);
     }

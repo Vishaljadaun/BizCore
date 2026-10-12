@@ -48,6 +48,8 @@ Remaining policy features: holidays, half-days, carryover, proration, policy edi
 - Verify persistence after restart, database backup/restore, responsive layouts, and keyboard interactions.
 - Define company timezones, shifts, overnight attendance, and correction approval before payroll use.
 
-## Later modules
+## Milestone 5 — connected operations
 
-Projects, inventory, purchasing/vendors, and finance remain planned and are hidden from main navigation. Build one complete business workflow at a time after HR is stable. Billing, an embeddable module, and a complete ERP are not delivered by milestone 1.
+Implemented core workflows for Projects, Inventory, Vendors, and Finance. See [OPERATIONS.md](OPERATIONS.md): persistent data and responsive forms, employee task ownership, vendor supplier ownership, transaction-protected stock receipts and expense creation, recorded invoice payments, cash-flow reporting, and CSV export. Operations permissions re-read the current account and role on every request. Database/model consistency and real PostgreSQL concurrency are covered by automated checks.
+
+Remaining extensions include payroll, accounting journals, tax-compliant invoicing, payment gateways, refunds/credit notes, partial deliveries/returns, multi-warehouse stock, project budgets, password self-service, and a broader administration authorization audit. Completing core modules does not imply those advanced features are included.

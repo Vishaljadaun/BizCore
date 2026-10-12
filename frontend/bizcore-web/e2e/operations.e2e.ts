@@ -62,6 +62,7 @@ test('connected operations persist, enforce ownership and serialize money and st
     await action(employeePage, 'Mark done');
     await employeePage.reload();
     await expect(employeePage.getByRole('article')).toContainText('Done');
+    expect((await employeePage.getByLabel('Search tasks', { exact: true }).boundingBox())!.width).toBeGreaterThan(250);
     await employeePage.screenshot({ path: info.outputPath('mobile-tasks.png'), fullPage: true });
     expect(await employeePage.evaluate('document.documentElement.scrollWidth <= innerWidth')).toBeTruthy();
     await employeePage.goto('/projects/time-logs');
@@ -149,7 +150,7 @@ test('connected operations persist, enforce ownership and serialize money and st
     const stream = await (await event).createReadStream(); let csv = ''; for await (const chunk of stream!) csv += chunk.toString();
     expect(csv).toContain('BANK-DEMO-1'); expect(csv).toContain('Office delivery'); expect(csv).toContain('INR');
     await page.screenshot({ path: info.outputPath('desktop-finance.png'), fullPage: true });
-    await page.setViewportSize({ width: 390, height: 844 }); await page.screenshot({ path: info.outputPath('mobile-finance.png'), fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 }); await expect(page.locator('aside')).not.toBeInViewport(); await page.screenshot({ path: info.outputPath('mobile-finance.png'), fullPage: true });
     expect(await page.evaluate('document.documentElement.scrollWidth <= innerWidth')).toBeTruthy();
   });
   await test.step('Payment retries are idempotent and concurrent overpayment is rejected', async () => {
@@ -170,6 +171,21 @@ test('connected operations persist, enforce ownership and serialize money and st
     const foreignProduct = await request.post(`${root}/operations/orders`, { headers: foreignHeaders, data: { supplierId: supplier.id, notes: '', expectedDate: null, lines: [{ productId: product.id, quantity: 1, unitCost: 1 }] } }); expect(foreignProduct.status()).toBe(404);
     for (const resource of ['products', 'invoices', 'suppliers', 'expenses']) expect((await request.get(`${root}/operations/${resource}`, { headers: { Authorization: `Bearer ${employeeAuth.accessToken}` } })).status()).toBe(403);
     expect((await get('time-entries')).items[0].taskId).toBe(task.id);
+  });
+  await test.step('A failed multi-line receipt rolls back all stock and expense changes', async () => {
+    const full = await post('operations/products', { sku: 'FULL', name: 'Capacity test', unit: 'units', reorderLevel: 0, unitCost: 1, isActive: true });
+    await post(`operations/products/${full.id}/stock`, { delta: 999999, reason: 'Test capacity boundary', requestId: randomUUID() });
+    const attempt = await post('operations/orders', { supplierId: supplier.id, expectedDate: null, notes: '', lines: [{ productId: product.id, quantity: 1, unitCost: 100 }, { productId: full.id, quantity: 2, unitCost: 1 }] });
+    await put(`orders/${attempt.id}/status`, { status: 'Placed' });
+    const result = await request.put(`${root}/operations/orders/${attempt.id}/status`, { headers, data: { status: 'Received' } }); expect(result.status()).toBe(409);
+    const products = (await get('products')).items;
+    expect(products.find((p: { id: string }) => p.id === product.id).onHand).toBe(2);
+    expect(products.find((p: { id: string }) => p.id === full.id).onHand).toBe(999999);
+    expect((await get('expenses')).totalCount).toBe(2);
+    expect((await get('orders')).items.find((o: { id: string }) => o.id === attempt.id).status).toBe('Placed');
+    // Revocation must apply to an already issued token, without waiting for expiry.
+    const toggle = await request.put(`${root}/users/${vendor.id}/toggle`, { headers }); expect(toggle.status()).toBe(200);
+    expect((await request.get(`${root}/operations/orders`, { headers: { Authorization: `Bearer ${vendorAuth.accessToken}` } })).status()).toBe(403);
   });
   await employeeContext.close(); await vendorContext.close();
 });
