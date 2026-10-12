@@ -24,6 +24,7 @@ const CompanyDetailPage  = lazy(() => import('../modules/companies/CompanyDetail
 const DepartmentsPage      = lazy(() => import('../modules/hr/departments/DepartmentsPage'));
 const EmployeesPage        = lazy(() => import('../modules/hr/employees/EmployeesPage'));
 const LeaveManagementPage  = lazy(() => import('../modules/hr/leaves/LeaveManagementPage'));
+const MyLeavePage = lazy(() => import('../modules/hr/leaves/MyLeavePage'));
 const AttendancePage       = lazy(() => import('../modules/hr/attendance/AttendancePage'));
 const MyProfilePage = lazy(
   () => import('../modules/hr/employees/MyProfilePage')
@@ -88,6 +89,7 @@ const AppRoutes = () => {
               UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager, UserRole.Employee
             ]} />}>
               <Route path="/my-profile" element={<MyProfilePage />} />
+              <Route path="/my-leave" element={<MyLeavePage />} />
             </Route>
 
             {/* HR Departments — Admins only */}

@@ -1,166 +1,70 @@
-﻿namespace BizCore.Application.HR.Leaves;
+namespace BizCore.Application.HR.Leaves;
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
 using BizCore.Application.Common.Models;
+using BizCore.Application.HR.Access;
 using BizCore.Domain.Enums;
-using BizCore.Domain.Events.HR;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-// ── Approve Leave ─────────────────────────────────────
-public record ApproveLeaveCommand(
-    Guid LeaveRequestId,
-    Guid ApproverEmployeeId
-) : IRequest<Result>;
+public record DecideLeaveCommand(Guid LeaveRequestId, bool Approve, string? RejectionReason = null) : IRequest<Result>;
 
-public class ApproveLeaveCommandHandler
-    : IRequestHandler<ApproveLeaveCommand, Result>
+public class DecideLeaveCommandHandler(IApplicationDbContext db, ICurrentUserService current)
+    : IRequestHandler<DecideLeaveCommand, Result>
 {
-    private readonly IApplicationDbContext _context;
-    private readonly ICurrentUserService _currentUser;
-    private readonly IPublisher _publisher;
-    // IPublisher = MediatR events publish karne ke liye
-
-    public ApproveLeaveCommandHandler(
-        IApplicationDbContext context,
-        ICurrentUserService currentUser,
-        IPublisher publisher)
+    public async Task<Result> Handle(DecideLeaveCommand command, CancellationToken ct)
     {
-        _context = context;
-        _currentUser = currentUser;
-        _publisher = publisher;
-    }
-
-    public async Task<Result> Handle(
-        ApproveLeaveCommand command,
-        CancellationToken cancellationToken)
-    {
-        var companyId = _currentUser.CompanyId
-            ?? throw new ForbiddenAccessException(
-                "Company context not found.");
-
-        // Find leave request
-        var leaveRequest = await _context.LeaveRequests
-            .IgnoreQueryFilters()
-            .Include(lr => lr.Employee)
-            .Include(lr => lr.LeaveType)
-            .FirstOrDefaultAsync(lr =>
-                lr.Id == command.LeaveRequestId &&
-                lr.CompanyId == companyId,
-                cancellationToken);
-
-        if (leaveRequest == null)
-            throw new NotFoundException(
-                "LeaveRequest", command.LeaveRequestId);
-
-        if (leaveRequest.Status != LeaveStatus.Pending)
-            return Result.Failure(
-                $"Cannot approve a leave that is " +
-                $"already {leaveRequest.Status}.");
-
-        // Update leave request
-        leaveRequest.Status = LeaveStatus.Approved;
-        leaveRequest.ApprovedById = command.ApproverEmployeeId;
-        leaveRequest.ApprovedAt = DateTime.UtcNow;
-
-        // Deduct from leave balance
-        var balance = await _context.LeaveBalances
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(lb =>
-                lb.EmployeeId == leaveRequest.EmployeeId &&
-                lb.LeaveTypeId == leaveRequest.LeaveTypeId &&
-                lb.Year == leaveRequest.StartDate.Year,
-                cancellationToken);
-
-        if (balance != null)
-            balance.UsedDays += leaveRequest.TotalDays;
-
-        await _context.SaveChangesAsync(cancellationToken);
-
-        // Fire MediatR event — other modules can react
-        // Project module will listen and notify PM
-        await _publisher.Publish(
-            new LeaveApprovedEvent(
-                leaveRequest.Id,
-                leaveRequest.EmployeeId,
-                companyId,
-                leaveRequest.Employee.FullName,
-                leaveRequest.StartDate,
-                leaveRequest.EndDate,
-                leaveRequest.TotalDays
-            ), cancellationToken);
-
-        return Result.Success();
+        var caller = await EmployeeAccess.GetCallerAsync(db, current, ct);
+        if (!EmployeeAccess.CanManage(caller)) throw new ForbiddenAccessException("Only administrators and managers can review leave.");
+        if (!command.Approve && (string.IsNullOrWhiteSpace(command.RejectionReason) || command.RejectionReason.Trim().Length > 500))
+            return Result.Failure("Enter a rejection reason of 1–500 characters.");
+        var employeeId = await db.LeaveRequests.AsNoTracking().Where(x => x.Id == command.LeaveRequestId &&
+            x.CompanyId == caller.CompanyId).Select(x => (Guid?)x.EmployeeId).SingleOrDefaultAsync(ct)
+            ?? throw new NotFoundException("Leave request", command.LeaveRequestId);
+        return await db.WithEmployeeLockAsync(employeeId, async () =>
+        {
+            var request = await db.LeaveRequests.Include(x => x.Employee).SingleAsync(x =>
+                x.Id == command.LeaveRequestId && x.CompanyId == caller.CompanyId, ct);
+            if (caller.EmployeeId == request.EmployeeId || request.Employee.UserId == caller.Id)
+                throw new ForbiddenAccessException("You cannot review your own leave request.");
+            if (request.Status != LeaveStatus.Pending) return Result.Failure("This request has already been reviewed or cancelled.", 409);
+            if (command.Approve)
+            {
+                var balance = await db.LeaveBalances.SingleOrDefaultAsync(x => x.CompanyId == caller.CompanyId &&
+                    x.EmployeeId == request.EmployeeId && x.LeaveTypeId == request.LeaveTypeId && x.Year == request.StartDate.Year, ct);
+                if (balance == null || balance.TotalDays - balance.UsedDays < request.TotalDays)
+                    return Result.Failure("The employee has insufficient leave balance.", 409);
+                if (!request.Employee.IsActive) return Result.Failure("This employee is inactive.", 409);
+                balance.UsedDays += request.TotalDays;
+            }
+            request.Status = command.Approve ? LeaveStatus.Approved : LeaveStatus.Rejected;
+            request.ApprovedAt = DateTime.UtcNow;
+            request.ReviewedByUserId = caller.Id;
+            request.ReviewedByName = $"{caller.FirstName} {caller.LastName}".Trim();
+            request.RejectionReason = command.Approve ? null : command.RejectionReason!.Trim();
+            await db.SaveChangesAsync(ct);
+            return Result.Success();
+        }, ct);
     }
 }
 
-// ── Reject Leave ──────────────────────────────────────
-public record RejectLeaveCommand(
-    Guid LeaveRequestId,
-    Guid ApproverEmployeeId,
-    string RejectionReason
-) : IRequest<Result>;
-
-public class RejectLeaveCommandHandler
-    : IRequestHandler<RejectLeaveCommand, Result>
+public record CancelLeaveCommand(Guid Id) : IRequest<Result>;
+public class CancelLeaveCommandHandler(IApplicationDbContext db, ICurrentUserService current) : IRequestHandler<CancelLeaveCommand, Result>
 {
-    private readonly IApplicationDbContext _context;
-    private readonly ICurrentUserService _currentUser;
-    private readonly IPublisher _publisher;
-
-    public RejectLeaveCommandHandler(
-        IApplicationDbContext context,
-        ICurrentUserService currentUser,
-        IPublisher publisher)
+    public async Task<Result> Handle(CancelLeaveCommand command, CancellationToken ct)
     {
-        _context = context;
-        _currentUser = currentUser;
-        _publisher = publisher;
-    }
-
-    public async Task<Result> Handle(
-        RejectLeaveCommand command,
-        CancellationToken cancellationToken)
-    {
-        var companyId = _currentUser.CompanyId
-            ?? throw new ForbiddenAccessException(
-                "Company context not found.");
-
-        var leaveRequest = await _context.LeaveRequests
-            .IgnoreQueryFilters()
-            .Include(lr => lr.Employee)
-            .FirstOrDefaultAsync(lr =>
-                lr.Id == command.LeaveRequestId &&
-                lr.CompanyId == companyId,
-                cancellationToken);
-
-        if (leaveRequest == null)
-            throw new NotFoundException(
-                "LeaveRequest", command.LeaveRequestId);
-
-        if (leaveRequest.Status != LeaveStatus.Pending)
-            return Result.Failure(
-                $"Cannot reject a leave that is " +
-                $"already {leaveRequest.Status}.");
-
-        leaveRequest.Status = LeaveStatus.Rejected;
-        leaveRequest.ApprovedById = command.ApproverEmployeeId;
-        leaveRequest.ApprovedAt = DateTime.UtcNow;
-        leaveRequest.RejectionReason = command.RejectionReason;
-
-        await _context.SaveChangesAsync(cancellationToken);
-
-        // Fire rejected event
-        await _publisher.Publish(
-            new LeaveRejectedEvent(
-                leaveRequest.Id,
-                leaveRequest.EmployeeId,
-                companyId,
-                leaveRequest.Employee.FullName,
-                command.RejectionReason
-            ), cancellationToken);
-
-        return Result.Success();
+        var caller = await EmployeeAccess.GetCallerAsync(db, current, ct);
+        var own = await EmployeeAccess.RequireAsync(db, caller, null, ct);
+        return await db.WithEmployeeLockAsync(own.Id, async () =>
+        {
+            var request = await db.LeaveRequests.SingleOrDefaultAsync(x => x.Id == command.Id &&
+                x.CompanyId == caller.CompanyId && x.EmployeeId == own.Id, ct)
+                ?? throw new NotFoundException("Leave request", command.Id);
+            if (request.Status != LeaveStatus.Pending) return Result.Failure("Only pending requests can be cancelled.", 409);
+            request.Status = LeaveStatus.Cancelled;
+            await db.SaveChangesAsync(ct);
+            return Result.Success();
+        }, ct);
     }
 }

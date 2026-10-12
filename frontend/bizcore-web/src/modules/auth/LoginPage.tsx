@@ -399,15 +399,7 @@ const LoginPage = () => {
               </button>
             </div>
 
-            <div className="flex justify-end -mt-3">
-              <Link
-                to="/forgot-password"
-                className="text-xs text-cyan-400 hover:text-cyan-300
-                  hover:underline font-mono tracking-wider transition-colors"
-              >
-                Forgot password?
-              </Link>
-            </div>
+            <p className="text-xs text-slate-400">Password recovery is not available in this portfolio version.</p>
 
             {/* Glowing submit button */}
             <div className="relative group/btn mt-2">
@@ -448,47 +440,7 @@ const LoginPage = () => {
         </div>
       </div>
 
-      {/* Bottom-right live telemetry widget */}
-      <div className="fixed bottom-6 right-6 z-30
-        bg-slate-900/95 border border-slate-800
-        rounded-2xl p-4 w-72 backdrop-blur-xl
-        shadow-2xl hover:border-cyan-500/30 transition-all
-        hidden lg:block">
-        <div className="flex items-center gap-2 mb-3
-          border-b border-slate-800 pb-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full
-              rounded-full bg-cyan-400 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5
-              rounded-full bg-cyan-500" />
-          </span>
-          <h4 className="text-[10px] font-bold tracking-widest
-            text-cyan-400 uppercase">
-            BizCore Live Telemetry
-          </h4>
-        </div>
 
-        <div className="flex flex-col gap-1.5 text-[10px] font-mono
-          bg-slate-950 rounded-xl p-2.5 border border-slate-800">
-          <div className="flex justify-between">
-            <span className="text-slate-500">🔐 Auth Nodes:</span>
-            <span className="text-pink-400 font-bold">3 SECURE</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">📦 Data Streams:</span>
-            <span className="text-cyan-400 font-bold">ACTIVE</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-500">👥 Sessions:</span>
-            <span className="text-purple-400 font-bold">MONITORED</span>
-          </div>
-        </div>
-
-        <p className="text-[9px] text-slate-600 font-mono mt-2.5
-          text-center leading-relaxed">
-          Click anywhere on the background to emit a sync shockwave
-        </p>
-      </div>
     </div>
   );
 };

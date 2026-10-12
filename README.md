@@ -1,6 +1,6 @@
 # BizCore — Business Management Platform
 
-BizCore is a .NET and React portfolio project for managing companies, users, and employee operations. The current implementation focuses on company administration and an HR foundation; it is not yet a complete ERP.
+BizCore is a .NET and React portfolio project for managing companies, users, and employee operations. The current implementation focuses on company administration and an HR workflow; it is not yet a complete ERP.
 
 [![Build and test](https://github.com/Vishaljadaun/BizCore/actions/workflows/ci.yml/badge.svg)](https://github.com/Vishaljadaun/BizCore/actions/workflows/ci.yml)
 
@@ -18,9 +18,10 @@ See [deployment configuration](docs/DEPLOYMENT.md). This preview includes the wo
 | Company and user administration | Implemented screens and API handlers; a full authorization audit remains. |
 | Departments and employees | Creation/listing, employee-account linking, and profile viewing. Department update wiring remains incomplete. |
 | Employee self-service | Profile, leave balances, and daily clock-in/out. Employees can access only their own HR records; managers can manage active employees in their company. |
-| Attendance management | Company-scoped list, employee/date filters, pagination, clock actions, and visible failures. |
-| Leave workflow | Partial: data model and handlers exist, but the manager leave API/controller and complete employee application UI are unfinished. |
-| Projects, inventory, vendors, finance | Navigation placeholders, not working modules. |
+| Attendance management | Company-scoped list, employee/date filters, pagination, clock actions, and CSV export of all matching records for a selected day. |
+| Leave workflow | Annual policies, employee application/history/cancellation, admin/manager reviews, reserved pending balances, and PostgreSQL transaction locks. |
+| Dashboard | Company/personal metrics from the API, role-appropriate actions, loading and retry states. |
+| Projects, inventory, vendors, finance | Planned; hidden from main navigation and labelled on the dashboard. |
 
 See [the completion plan](docs/COMPLETION.md) for findings and the next milestones.
 
@@ -33,7 +34,7 @@ See [the completion plan](docs/COMPLETION.md) for findings and the next mileston
 | Infrastructure | EF Core 8, Npgsql/PostgreSQL, BCrypt password hashing, JWT generation, and database seeding. |
 | API | ASP.NET Core controllers, role authorization, exception middleware, Swagger, and dependency injection. |
 | Frontend | React 19, TypeScript 6, Vite 8, Tailwind CSS 3, React Router 7, Zustand 5, Axios, React Hook Form, and Zod. |
-| Verification | xUnit, EF InMemory handler tests, Vitest, React Testing Library, ESLint, and GitHub Actions. |
+| Verification | xUnit, EF InMemory handler tests, Vitest, React Testing Library, ESLint, Playwright with PostgreSQL 16, and GitHub Actions. |
 
 Backend projects live under `backend/`; the frontend application is in **`frontend/bizcore-web/`**.
 
@@ -120,9 +121,9 @@ npm test
 npm run build
 ```
 
-Backend tests cover employee ownership, company boundaries, revoked links, inactive accounts, per-context tenant filtering, token subject validation, and refresh rotation. These fast handler tests use EF InMemory. A separate Playwright job starts the real API with PostgreSQL 16 and exercises registration, employee linking, attendance and revocation through the browser. It runs twice against the same database to check fresh and repeated migration startup.
+Backend tests cover employee ownership, company boundaries, revoked links, inactive accounts, per-context tenant filtering, token subject validation, and refresh rotation. These fast handler tests use EF InMemory. A separate Playwright job starts the real API with PostgreSQL 16 and exercises registration, employee linking, attendance/CSV export, mobile leave applications, reviews/cancellation, and revocation through the browser. It also sends concurrent leave applications and duplicate approvals against PostgreSQL to verify balance protection. It runs twice against the same database to check fresh and repeated migration startup.
 
-Frontend tests cover concurrent refresh, refresh failures, logout during refresh, employee route access, profile loading, and attendance errors. CI runs backend, frontend and browser jobs on work branches and pull requests. The browser test also covers a phone-sized employee view; this is not a complete responsive or accessibility audit.
+Frontend tests cover concurrent refresh, refresh failures, logout during refresh, employee route access, profile loading, attendance errors, failed leave application preservation, and dashboard error/retry states. CI runs backend, frontend and browser jobs on work branches and pull requests. The browser test also covers a phone-sized employee view; this is not a complete responsive or accessibility audit.
 
 For exact setup, expected results, automated browser commands and phone-friendly CI instructions, see [Testing BizCore](docs/TESTING.md).
 
@@ -137,3 +138,17 @@ For exact setup, expected results, automated browser commands and phone-friendly
 7. Remove the employee-account link and verify self-service access stops, even in the already signed-in employee browser.
 
 Attendance currently uses UTC calendar days and a fixed 09:30 UTC lateness threshold. It is a learning workflow, not payroll-ready timekeeping. Company timezones, shifts, corrections, and audit history belong in a later milestone.
+
+
+## Leave workflow and business rules
+
+1. A company administrator creates an annual policy under **HR Module → Leave Management** (for example, Annual leave: 12 days).
+2. A linked employee opens **My Leave**, chooses dates and a reason, and submits a request. The UI shows used, pending, and available days separately.
+3. A manager or administrator approves or rejects it. The server records the signed-in reviewer; an administrator does not need an employee profile. Self-review is forbidden.
+4. Approval spends the reserved days. Rejection or employee cancellation of a pending request releases them. Final decisions cannot be repeated; approved requests cannot yet be cancelled.
+
+Requests use whole Monday–Friday days, count public holidays, start today or later (UTC), and stay within this or next calendar year. Allowances are not prorated; there is no carryover, holiday calendar, policy editing, or payroll integration. Policies are company-scoped, and newly added policies are available to existing employees automatically.
+
+Applications, cancellations, and reviews acquire a PostgreSQL transaction-scoped advisory lock for the employee. Balance checks and writes run inside that transaction, so two API instances cannot approve the same request twice or reserve the same final day. The reviewer migration adds two nullable columns and preserves existing accounts, records, and historical reviewer relationships.
+
+CSV export quotes values, neutralizes spreadsheet formula prefixes in employee fields, and caps downloads at 10,000 rows. The API supports date ranges of up to 366 days; the UI exports the selected UTC day and employee filter, independently of table pagination. It is an attendance report, not a payroll calculation.

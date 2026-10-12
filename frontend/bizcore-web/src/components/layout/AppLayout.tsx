@@ -4,7 +4,7 @@ import Navbar                   from './Navbar';
 
 const AppLayout = () => {
   return (
-    <div className="flex h-screen overflow-hidden
+    <div className="flex h-dvh overflow-hidden
       bg-gray-50 dark:bg-slate-950
       transition-colors duration-200">
 
@@ -24,7 +24,7 @@ const AppLayout = () => {
           </div>
 
           {/* Page content */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6 lg:p-8">
             <Outlet />
           </div>
 
@@ -36,6 +36,9 @@ const AppLayout = () => {
 
 // ── Breadcrumb ─────────────────────────────────────────────────────────────
 const pathLabels: Record<string, string> = {
+  'my-leave': 'My Leave',
+  'my-profile': 'My Profile',
+  departments: 'Departments',
   dashboard:         'Dashboard',
   hr:                'HR Module',
   employees:         'Employees',

@@ -55,6 +55,19 @@ namespace BizCore.Infrastructure.Persistence
             base.OnModelCreating(builder);
         }
 
+        // Serialize leave applications and decisions for the same employee across
+        // API instances. The lock releases on commit/rollback, including exceptions.
+        public async Task<T> WithEmployeeLockAsync<T>(Guid employeeId, Func<Task<T>> action, CancellationToken ct)
+        {
+            if (!Database.IsRelational()) return await action(); // InMemory unit tests
+            await using var transaction = await Database.BeginTransactionAsync(ct);
+            await Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({employeeId.ToString()}, 0))", ct);
+            var result = await action();
+            await transaction.CommitAsync(ct);
+            return result;
+        }
+
         public override async Task<int> SaveChangesAsync(
             CancellationToken cancellationToken = default)
         {

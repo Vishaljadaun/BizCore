@@ -83,10 +83,10 @@ public class GetLeaveRequestsQueryHandler
                 lr.TotalDays,
                 lr.Reason,
                 lr.Status.ToString(),
-                lr.ApprovedBy != null
+                lr.ReviewedByName ?? (lr.ApprovedBy != null
                     ? lr.ApprovedBy.FirstName + " " +
                       lr.ApprovedBy.LastName
-                    : null,
+                    : null),
                 lr.ApprovedAt,
                 lr.RejectionReason,
                 lr.CreatedAt

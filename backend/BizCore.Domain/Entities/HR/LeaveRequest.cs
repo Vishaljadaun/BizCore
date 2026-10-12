@@ -16,6 +16,9 @@ public class LeaveRequest : BaseTenantEntity
         = LeaveStatus.Pending;
 
     // Who approved/rejected
+    // Preserve the authenticated reviewer even without an employee profile.
+    public Guid? ReviewedByUserId { get; set; }
+    public string? ReviewedByName { get; set; }
     public Guid? ApprovedById { get; set; }
     public DateTime? ApprovedAt { get; set; }
     public string? RejectionReason { get; set; }

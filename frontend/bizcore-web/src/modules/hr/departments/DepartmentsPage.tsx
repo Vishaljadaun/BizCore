@@ -42,12 +42,12 @@ const DepartmentsPage = () => {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-slate-100">
             Departments
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
             Manage your company departments
           </p>
         </div>
@@ -57,8 +57,8 @@ const DepartmentsPage = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-white rounded-xl border
-        border-gray-100 shadow-sm p-4 mb-6">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border
+        border-gray-100 dark:border-slate-800 shadow-sm p-4 mb-6">
         <div className="relative max-w-sm">
           <span className="absolute left-3 top-1/2
             -translate-y-1/2 text-gray-400">🔍</span>
@@ -68,7 +68,7 @@ const DepartmentsPage = () => {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-9 pr-4 py-2 border
-              border-gray-200 rounded-lg text-sm
+              border-gray-200 dark:border-slate-700 rounded-lg text-sm
               focus:outline-none focus:ring-2
               focus:ring-primary-500"
           />
@@ -96,8 +96,8 @@ const DepartmentsPage = () => {
           {data?.items.map((dept) => (
             <div
               key={dept.id}
-              className="bg-white rounded-xl border
-                border-gray-100 shadow-sm p-5
+              className="bg-white dark:bg-slate-900 rounded-xl border
+                border-gray-100 dark:border-slate-800 shadow-sm p-5
                 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start
@@ -114,34 +114,34 @@ const DepartmentsPage = () => {
                   text-xs font-medium
                   ${dept.isActive
                     ? 'bg-green-100 text-green-700'
-                    : 'bg-gray-100 text-gray-500'
+                    : 'bg-gray-100 text-gray-500 dark:text-slate-400'
                   }`}>
                   {dept.isActive ? 'Active' : 'Inactive'}
                 </span>
               </div>
 
-              <h3 className="font-semibold text-gray-900">
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100">
                 {dept.name}
               </h3>
 
               {dept.description && (
-                <p className="text-sm text-gray-500 mt-1
+                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1
                   line-clamp-2">
                   {dept.description}
                 </p>
               )}
 
               <div className="mt-4 pt-4 border-t
-                border-gray-100 flex items-center
+                border-gray-100 dark:border-slate-800 flex items-center
                 justify-between text-sm">
                 <div className="flex items-center
-                  gap-1 text-gray-500">
+                  gap-1 text-gray-500 dark:text-slate-400">
                   <span>👥</span>
                   <span>{dept.totalEmployees} employees</span>
                 </div>
                 {dept.managerName && (
                   <div className="flex items-center
-                    gap-1 text-gray-500">
+                    gap-1 text-gray-500 dark:text-slate-400">
                     <span>👤</span>
                     <span className="truncate max-w-[120px]">
                       {dept.managerName}
@@ -155,10 +155,10 @@ const DepartmentsPage = () => {
           {data?.items.length === 0 && (
             <div className="col-span-3 py-12 text-center">
               <div className="text-4xl mb-3">🏢</div>
-              <h3 className="font-semibold text-gray-900">
+              <h3 className="font-semibold text-gray-900 dark:text-slate-100">
                 No departments yet
               </h3>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 dark:text-slate-400 text-sm mt-1">
                 Create your first department to get started
               </p>
             </div>

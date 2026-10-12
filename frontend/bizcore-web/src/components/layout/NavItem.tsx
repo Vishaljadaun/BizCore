@@ -30,8 +30,9 @@ const NavItemComponent = ({ item, isCollapsed, depth = 0 }: Props) => {
     return (
       <div className="relative group">
         <NavLink
-          to={hasChildren ? '#' : item.path}
-          onClick={hasChildren ? undefined : closeMobileSidebar}
+          to={hasChildren ? item.children!.find(child => child.roles.includes(user?.role as UserRole))?.path || '/dashboard' : item.path}
+          aria-label={item.label}
+          onClick={closeMobileSidebar}
           className={`
             flex items-center justify-center
             w-10 h-10 rounded-xl mx-auto transition-all duration-200
@@ -66,6 +67,7 @@ const NavItemComponent = ({ item, isCollapsed, depth = 0 }: Props) => {
     return (
       <div>
         <button
+          aria-expanded={isExpanded}
           onClick={() => toggleExpandedMenu(item.path)}
           className={`
             w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
