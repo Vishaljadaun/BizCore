@@ -30,16 +30,9 @@ const MyProfilePage = lazy(
   () => import('../modules/hr/employees/MyProfilePage')
 );
 
-// Temporary placeholder for modules not yet built
-const ComingSoon = ({ title }: { title: string }) => (
-  <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-    <div className="text-5xl mb-4">🚧</div>
-    <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-    <p className="text-gray-500 mt-2 text-sm">
-      This module will be built in an upcoming step
-    </p>
-  </div>
-);
+const OperationsPage = lazy(() => import('../modules/operations/OperationsPage'));
+const ReportsPage = lazy(() => import('../modules/operations/ReportsPage'));
+const VendorPortal = lazy(() => import('../modules/operations/VendorPortal'));
 
 // Loading spinner shown while lazy chunks are downloading
 const PageLoader = () => (
@@ -116,42 +109,46 @@ const AppRoutes = () => {
             </Route>
 
 
-            {/* ── COMING SOON MODULES ───────────────────────────────── */}
+            {/* Operations modules */}
 
             {/* Projects — Employees and above */}
             <Route element={<ProtectedRoute allowedRoles={[
               UserRole.SuperAdmin, UserRole.CompanyAdmin,
               UserRole.Manager,    UserRole.Employee
             ]} />}>
-              <Route path="/projects/list"       element={<ComingSoon title="All Projects" />} />
-              <Route path="/projects/my-tasks"   element={<ComingSoon title="My Tasks" />} />
-              <Route path="/projects/time-logs"  element={<ComingSoon title="Time Logs" />} />
+              <Route path="/projects/tasks" element={<OperationsPage key="all-tasks" resource="tasks" />} />
+              <Route path="/projects/list"       element={<OperationsPage key="All Projects" resource="projects" />} />
+              <Route path="/projects/my-tasks"   element={<OperationsPage key="My Tasks" resource="tasks" mine />} />
+              <Route path="/projects/time-logs"  element={<OperationsPage key="Time Logs" resource="time-entries" />} />
             </Route>
 
             {/* Inventory — Managers and above */}
             <Route element={<ProtectedRoute allowedRoles={[
               UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager
             ]} />}>
-              <Route path="/inventory/products"        element={<ComingSoon title="Products" />} />
-              <Route path="/inventory/purchase-orders" element={<ComingSoon title="Purchase Orders" />} />
-              <Route path="/inventory/alerts"          element={<ComingSoon title="Stock Alerts" />} />
+              <Route path="/inventory/movements" element={<OperationsPage key="movements" resource="movements" />} />
+              <Route path="/inventory/products"        element={<OperationsPage key="Products" resource="products" />} />
+              <Route path="/inventory/purchase-orders" element={<OperationsPage key="Purchase Orders" resource="orders" />} />
+              <Route path="/inventory/alerts"          element={<OperationsPage key="Stock Alerts" resource="products" lowStock />} />
             </Route>
 
             {/* Vendors — Managers and above */}
             <Route element={<ProtectedRoute allowedRoles={[
               UserRole.SuperAdmin, UserRole.CompanyAdmin, UserRole.Manager
             ]} />}>
-              <Route path="/vendors/list"      element={<ComingSoon title="Vendor List" />} />
-              <Route path="/vendors/contracts" element={<ComingSoon title="Contracts" />} />
+              <Route path="/vendors/list"      element={<OperationsPage key="Vendor List" resource="suppliers" />} />
+              <Route path="/vendors/contracts" element={<OperationsPage key="Contracts" resource="contracts" />} />
             </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={[UserRole.Vendor]} />}><Route path="/vendor-portal" element={<VendorPortal />} /></Route>
 
             {/* Finance — Admins only */}
             <Route element={<ProtectedRoute allowedRoles={[
               UserRole.SuperAdmin, UserRole.CompanyAdmin
             ]} />}>
-              <Route path="/finance/invoices" element={<ComingSoon title="Invoices" />} />
-              <Route path="/finance/expenses" element={<ComingSoon title="Expenses" />} />
-              <Route path="/finance/reports"  element={<ComingSoon title="Reports" />} />
+              <Route path="/finance/invoices" element={<OperationsPage key="Invoices" resource="invoices" />} />
+              <Route path="/finance/expenses" element={<OperationsPage key="Expenses" resource="expenses" />} />
+              <Route path="/finance/reports"  element={<ReportsPage />} />
             </Route>
 
           </Route>
