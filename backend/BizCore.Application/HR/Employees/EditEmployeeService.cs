@@ -44,10 +44,10 @@ public class EditEmployeeService(IApplicationDbContext db, ICurrentUserService c
                     throw new ConflictException("Clock out this employee before deactivating the record.");
                 if (employee.UserId.HasValue)
                 {
-                    var linked = await AccountAccess.Target(db, caller, employee.UserId.Value, ct);
-                    if (linked.Id == caller.Id) throw new ForbiddenAccessException("You cannot deactivate your own linked account.");
-                    await AccountAccess.ProtectLastAdmin(db, linked, ct);
-                    await db.WithEmployeeLockAsync(linked.Id, async () => {
+                    await db.WithEmployeeLockAsync(employee.UserId.Value, async () => {
+                        var linked = await AccountAccess.Target(db, caller, employee.UserId.Value, ct);
+                        if (linked.Id == caller.Id) throw new ForbiddenAccessException("You cannot deactivate your own linked account.");
+                        await AccountAccess.ProtectLastAdmin(db, linked, ct);
                         linked.IsActive = false; await AccountAccess.RevokeSessions(db, linked, ct);
                         await db.SaveChangesAsync(ct); return true;
                     }, ct);

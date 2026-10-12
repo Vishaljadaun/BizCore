@@ -68,9 +68,15 @@ jobs:
         working-directory: frontend/bizcore-web
       - run: npm run test:e2e
         working-directory: frontend/bizcore-web
-      - name: Restart API and repeat against the existing schema
+      - name: Restart API and verify existing records
         run: npm run test:e2e
         working-directory: frontend/bizcore-web
+        env:
+          BIZCORE_VERIFY_PERSISTENCE: 'true'
+      - name: Rehearse PostgreSQL backup and restore
+        run: bash scripts/check-ci-recovery.sh
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:

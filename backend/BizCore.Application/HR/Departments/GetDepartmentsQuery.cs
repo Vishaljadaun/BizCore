@@ -116,6 +116,8 @@ public class UpdateDepartmentCommandHandler
         UpdateDepartmentCommand command,
         CancellationToken cancellationToken)
     {
+        var companyId = _currentUser.CompanyId ?? throw new ForbiddenAccessException("Company context required.");
+        return await _context.WithEmployeeLockAsync(companyId, async () => {
         var dept = await _context.Departments
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(d =>
@@ -146,5 +148,6 @@ public class UpdateDepartmentCommandHandler
                 dept.ManagerId, null, 0,
                 dept.IsActive, dept.CreatedAt
             ));
+        }, cancellationToken);
     }
 }

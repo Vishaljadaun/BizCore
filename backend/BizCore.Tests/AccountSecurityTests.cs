@@ -4,6 +4,7 @@ using BizCore.Application.HR.Departments;
 using BizCore.Application.Security;
 using BizCore.Application.Users.Commands;
 using BizCore.Domain.Entities;
+using BizCore.Domain.Entities.HR;
 using BizCore.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 

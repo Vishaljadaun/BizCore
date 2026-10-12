@@ -12,3 +12,5 @@ $RECYCLE.BIN/
 
 # ── OS ────────────────────────────────────────────────
 .DS_Store
+# Disposable credentials for the restart test (never upload as an artifact)
+.e2e-persistence.json
