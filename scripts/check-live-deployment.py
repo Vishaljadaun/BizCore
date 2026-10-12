@@ -97,4 +97,53 @@ passed('Attendance CSV export')
 request('/api/hr/employees/' + employee['id'] + '/link-user', 'DELETE', token=admin_token)
 request('/api/hr/employees/clock-in', 'POST', token=employee_token, expected=404)
 passed('Revocation blocks the existing employee token')
+# Exercise the connected modules in the same fictional company.
+from uuid import uuid4
+
+def ops(path, method='GET', body=None, token=None, expected=200):
+    return request('/api/operations/' + path, method, body, token or admin_token, expected)[0]
+
+project = ops('projects', 'POST', {'name': 'Preview office setup', 'description': 'Deployment verification', 'dueDate': None}, expected=201)
+task = ops('tasks', 'POST', {'projectId': project['id'], 'title': 'Inspect delivery', 'description': '', 'assignedUserId': user['id'], 'dueDate': None, 'priority': 'Medium'}, expected=201)
+ops('tasks/' + task['id'] + '/status', 'PUT', {'status': 'InProgress'}, employee_token)
+ops('time-entries', 'POST', {'taskId': task['id'], 'date': today, 'minutes': 15, 'note': 'Fictional inspection'}, employee_token, 201)
+ops('tasks/' + task['id'] + '/status', 'PUT', {'status': 'Done'}, employee_token)
+ops('projects/' + project['id'] + '/status', 'PUT', {'status': 'Completed'})
+assert ops('time-entries')['items'][0]['minutes'] == 15
+passed('Projects, assigned employee tasks and stored time logs')
+vendor_email = 'check-vendor-' + suffix + '@example.com'
+vendor, _ = request('/api/users', 'POST', {'firstName': 'Preview', 'lastName': 'Vendor', 'email': vendor_email, 'password': password, 'role': 'Vendor'}, admin_token, 201)
+supplier = ops('suppliers', 'POST', {'name': 'Preview supplier', 'email': vendor_email, 'phone': '', 'address': '', 'portalUserId': vendor['id'], 'isActive': True}, expected=201)
+contract = ops('contracts', 'POST', {'supplierId': supplier['id'], 'title': 'Preview supply agreement', 'terms': 'Fictional test agreement', 'startDate': today, 'endDate': today, 'value': 300}, expected=201)
+ops('contracts/' + contract['id'] + '/status', 'PUT', {'status': 'Active'})
+product = ops('products', 'POST', {'sku': 'PREVIEW-DESK', 'name': 'Preview desk', 'unit': 'units', 'reorderLevel': 2, 'unitCost': 100, 'isActive': True}, expected=201)
+order = ops('orders', 'POST', {'supplierId': supplier['id'], 'expectedDate': None, 'notes': 'Fictional purchase', 'lines': [{'productId': product['id'], 'quantity': 3, 'unitCost': 100}]}, expected=201)
+ops('orders/' + order['id'] + '/status', 'PUT', {'status': 'Placed'})
+vendor_auth, _ = request('/api/auth/login', 'POST', {'email': vendor_email, 'password': password})
+vendor_token = vendor_auth['accessToken']
+assert ops('orders', token=vendor_token)['totalCount'] == 1
+assert ops('contracts', token=vendor_token)['totalCount'] == 1
+ops('orders/' + order['id'] + '/status', 'PUT', {'status': 'Acknowledged'}, vendor_token)
+passed('Supplier contracts and linked vendor acknowledgment')
+ops('orders/' + order['id'] + '/status', 'PUT', {'status': 'Received'})
+ops('orders/' + order['id'] + '/status', 'PUT', {'status': 'Received'}, expected=409)
+assert ops('products')['items'][0]['onHand'] == 3
+assert ops('movements')['totalCount'] == 1
+expense = ops('expenses')['items'][0]
+assert expense['amount'] == 300 and expense['orderId'] == order['id']
+passed('Purchase receipt creates stock and one expense; repeat blocked')
+invoice = ops('invoices', 'POST', {'customerName': 'Preview customer', 'customerEmail': '', 'issueDate': today, 'dueDate': today, 'notes': '', 'taxPercent': 10, 'lines': [{'description': 'Preview service', 'quantity': 1, 'unitPrice': 1000}]}, expected=201)
+ops('invoices/' + invoice['id'] + '/status', 'PUT', {'status': 'Issued'})
+payment = {'amount': 500, 'date': today, 'reference': 'Preview external payment', 'requestId': str(uuid4())}
+ops('invoices/' + invoice['id'] + '/payments', 'POST', payment, expected=201)
+ops('invoices/' + invoice['id'] + '/payments', 'POST', payment, expected=201)
+assert ops('invoices')['items'][0]['paid'] == 500
+ops('expenses/' + expense['id'] + '/status', 'PUT', {'status': 'Paid', 'date': today})
+report = ops('reports?from=' + today + '&to=' + today)
+assert report['received'] == 500 and report['paidExpenses'] == 300 and report['netCashFlow'] == 200
+csv, _ = request('/api/operations/reports/export?from=' + today + '&to=' + today, token=admin_token, raw_response=True)
+assert b'Preview external payment' in csv and b'INR' in csv
+ops('invoices', token=employee_token, expected=403)
+ops('products', token=vendor_token, expected=403)
+passed('Invoices, payment retry protection, paid expense, report, CSV and permissions')
 print(json.dumps({'passed': len(checks), 'fictionalCompany': 'Deployment Check ' + suffix}))

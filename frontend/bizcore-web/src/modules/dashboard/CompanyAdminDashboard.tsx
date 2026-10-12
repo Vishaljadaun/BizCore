@@ -1,3 +1,4 @@
+import VendorPortal from '../operations/VendorPortal';
 import { errorMessage } from '../hr/leaves/leaveErrors';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -24,7 +25,7 @@ export default function CompanyAdminDashboard() {
     }
     void load(); return () => { active = false; };
   }, [revision, user?.role]);
-  if (user?.role === UserRole.Vendor) return <section className={panel}><h1 className="text-xl font-bold text-gray-900 dark:text-slate-100">Vendor portal · planned</h1><p className={`mt-2 ${muted}`}>The vendor module is not available yet. Contact your company administrator for help.</p></section>;
+  if (user?.role === UserRole.Vendor) return <VendorPortal />;
   const management = data?.scope === 'company';
   const cards = management ? [
     ['Active employees', data?.activeEmployees, 'People in your company'],
@@ -46,12 +47,14 @@ export default function CompanyAdminDashboard() {
       <section aria-label="Overview metrics" className={`grid gap-4 sm:grid-cols-2 ${management ? 'xl:grid-cols-4' : 'xl:grid-cols-3'}`}>{cards.map(([label, value, help]) => <div key={label} className={panel}><p className="text-sm font-medium">{label}</p><p className="mt-4 text-4xl font-bold tracking-tight">{value}</p><p className={`mt-3 ${muted}`}>{help}</p></div>)}</section>
       <div className="grid items-start gap-6 lg:grid-cols-3"><section className={`${panel} lg:col-span-2`}><h2 className="text-lg font-semibold">{management ? 'Keep work moving' : 'Your next step'}</h2><p className={`mt-2 ${muted}`}>{management ? `${data.departments} departments · Set up your team, review requests, and export attendance.` : data.hasEmployeeProfile ? 'Clock in from your profile or plan your next day off.' : 'Ask your administrator to link your account to an employee record to use attendance and leave.'}</p>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">{(management ? [
+          ['/projects/list', 'Projects and tasks', 'Assign work and track delivery'],
+          ['/inventory/products', 'Stock and purchases', 'Manage products and receive orders'],
           ['/hr/employees', 'Manage employees', 'Create records and grant login access'],
           ['/hr/leaves', 'Review leave', 'Set policies and review requests'],
           ['/hr/attendance', 'View attendance', 'Check records and download CSV'],
           ['/my-profile', 'My profile', 'Your employee details and attendance'],
-        ] : [['/my-profile', 'My profile', 'Clock in, clock out, and view your details'], ['/my-leave', 'My Leave', 'Available days and request history']]).map(([to, title, help]) => <Link key={to} to={to} className="rounded-xl border border-gray-200 p-4 transition hover:border-primary-400 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-slate-700 dark:hover:bg-slate-800"><span className="font-semibold">{title} →</span><p className={`mt-1 ${muted}`}>{help}</p></Link>)}</div>
-      </section><aside className={panel}><span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 dark:bg-amber-900/30 dark:text-amber-300">Project roadmap</span><h2 className="mt-4 text-lg font-semibold">Built around people</h2><p className={`mt-2 leading-relaxed ${muted}`}>The HR workflow is available now. Payroll, projects, inventory, and finance are planned modules and are not available in this version.</p></aside></div>
+        ] : [['/projects/my-tasks', 'My tasks', 'Update tasks and log your time'], ['/my-profile', 'My profile', 'Clock in, clock out, and view your details'], ['/my-leave', 'My Leave', 'Available days and request history']]).map(([to, title, help]) => <Link key={to} to={to} className="rounded-xl border border-gray-200 p-4 transition hover:border-primary-400 hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:border-slate-700 dark:hover:bg-slate-800"><span className="font-semibold">{title} →</span><p className={`mt-1 ${muted}`}>{help}</p></Link>)}</div>
+      </section><aside className={panel}><span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-900 dark:bg-amber-900/30 dark:text-amber-300">Connected workflows</span><h2 className="mt-4 text-lg font-semibold">From plans to payments</h2><p className={`mt-2 leading-relaxed ${muted}`}>Assign project tasks, track time, manage suppliers, and receive stock. Administrators can issue invoices, record payments, and review cash flow.</p></aside></div>
     </>}
   </div>;
 }

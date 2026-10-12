@@ -1,6 +1,6 @@
 # BizCore — Business Management Platform
 
-BizCore is a .NET and React portfolio project for managing companies, users, and employee operations. The current implementation focuses on company administration and an HR workflow; it is not yet a complete ERP.
+BizCore is a .NET and React portfolio project that connects people, project delivery, purchasing, stock, and basic finance in one company workspace. It implements core business workflows with persistent PostgreSQL storage, role boundaries, and transaction checks. It is a learning ERP, not a complete accounting or payroll system.
 
 [![Build and test](https://github.com/Vishaljadaun/BizCore/actions/workflows/ci.yml/badge.svg)](https://github.com/Vishaljadaun/BizCore/actions/workflows/ci.yml)
 
@@ -8,7 +8,7 @@ BizCore is a .NET and React portfolio project for managing companies, users, and
 
 Open **[BizCore](https://bizcore-web.onrender.com/#/login)** on your phone or computer. Choose **Register your company** to create your own administrator account, then follow [the employee testing guide](docs/TESTING.md). The frontend and API run on Render, with persistent PostgreSQL storage on Neon. The free API may take about a minute to wake after inactivity.
 
-See [deployment configuration](docs/DEPLOYMENT.md). This preview includes the working features below; unfinished modules remain unfinished.
+See [deployment configuration](docs/DEPLOYMENT.md). Follow the [operations demo](docs/OPERATIONS.md) to try the connected modules.
 
 ## Current scope
 
@@ -21,7 +21,10 @@ See [deployment configuration](docs/DEPLOYMENT.md). This preview includes the wo
 | Attendance management | Company-scoped list, employee/date filters, pagination, clock actions, and CSV export of all matching records for a selected day. |
 | Leave workflow | Annual policies, employee application/history/cancellation, admin/manager reviews, reserved pending balances, and PostgreSQL transaction locks. |
 | Dashboard | Company/personal metrics from the API, role-appropriate actions, loading and retry states. |
-| Projects, inventory, vendors, finance | Planned; hidden from main navigation and labelled on the dashboard. |
+| Projects | Project lifecycle, assigned tasks, priorities, status updates, and personal time logs. |
+| Inventory | Product catalog, stock adjustments/history, reorder alerts, and purchase orders. |
+| Vendors | Supplier directory, contract lifecycle, and a linked vendor portal for order acknowledgment. |
+| Finance | Draft/issued invoices, partial/full payment records, expenses, cash-flow totals, and CSV export in INR. |
 
 See [the completion plan](docs/COMPLETION.md) for findings and the next milestones.
 
@@ -29,7 +32,7 @@ See [the completion plan](docs/COMPLETION.md) for findings and the next mileston
 
 | Layer | Technologies / purpose |
 | --- | --- |
-| Domain | C# entities and enums for companies, users, employees, attendance, and leave. |
+| Domain | C# entities and enums for companies, users, HR, projects, purchasing, inventory, and finance. |
 | Application | .NET 8, MediatR commands/queries, FluentValidation, result models, and interfaces. |
 | Infrastructure | EF Core 8, Npgsql/PostgreSQL, BCrypt password hashing, JWT generation, and database seeding. |
 | API | ASP.NET Core controllers, role authorization, exception middleware, Swagger, and dependency injection. |
@@ -38,7 +41,7 @@ See [the completion plan](docs/COMPLETION.md) for findings and the next mileston
 
 Backend projects live under `backend/`; the frontend application is in **`frontend/bizcore-web/`**.
 
-The browser sends REST requests to the API. Controllers dispatch commands/queries to application handlers. Infrastructure supplies PostgreSQL persistence and token services through dependency injection. Company IDs establish tenant context; personal HR actions also re-read the user's current account and employee link so stale JWT claims cannot preserve a removed link.
+The browser sends REST requests to the API. HR and administration controllers dispatch commands/queries to application handlers; operations controllers call a scoped application service. Infrastructure supplies PostgreSQL persistence and token services through dependency injection. Company IDs establish tenant context; personal HR actions also re-read the user's current account and employee link so stale JWT claims cannot preserve a removed link.
 
 ## Local setup
 
@@ -121,7 +124,7 @@ npm test
 npm run build
 ```
 
-Backend tests cover employee ownership, company boundaries, revoked links, inactive accounts, per-context tenant filtering, token subject validation, and refresh rotation. These fast handler tests use EF InMemory. A separate Playwright job starts the real API with PostgreSQL 16 and exercises registration, employee linking, attendance/CSV export, mobile leave applications, reviews/cancellation, and revocation through the browser. It also sends concurrent leave applications and duplicate approvals against PostgreSQL to verify balance protection. It runs twice against the same database to check fresh and repeated migration startup.
+Backend tests cover employee ownership, company boundaries, revoked links, inactive accounts, per-context tenant filtering, token subject validation, and refresh rotation. These fast handler tests use EF InMemory. A separate Playwright job starts the real API with PostgreSQL 16 and exercises registration, employee linking, attendance/CSV export, mobile leave applications, reviews/cancellation, and revocation through the browser. It also sends concurrent leave applications and duplicate approvals against PostgreSQL to verify balance protection. It also follows projects, time logs, supplier contracts, purchasing, inventory and finance through connected browser/API workflows, including concurrent receipts and payments. It runs twice against the same database to check fresh and repeated migration startup.
 
 Frontend tests cover concurrent refresh, refresh failures, logout during refresh, employee route access, profile loading, attendance errors, failed leave application preservation, and dashboard error/retry states. CI runs backend, frontend and browser jobs on work branches and pull requests. The browser test also covers a phone-sized employee view; this is not a complete responsive or accessibility audit.
 
@@ -152,3 +155,10 @@ Requests use whole Monday–Friday days, count public holidays, start today or l
 Applications, cancellations, and reviews acquire a PostgreSQL transaction-scoped advisory lock for the employee. Balance checks and writes run inside that transaction, so two API instances cannot approve the same request twice or reserve the same final day. The reviewer migration adds two nullable columns and preserves existing accounts, records, and historical reviewer relationships.
 
 CSV export quotes values, neutralizes spreadsheet formula prefixes in employee fields, and caps downloads at 10,000 rows. The API supports date ranges of up to 366 days; the UI exports the selected UTC day and employee filter, independently of table pagination. It is an attendance report, not a payroll calculation.
+
+
+## Connected operations: why these modules matter
+
+A small team can assign office-setup work, order supplies, receive them into stock, and record the supplier expense without re-entering that purchase in Finance. An administrator can issue a customer invoice, record partial payments, and compare receipts with paid expenses. A vendor sees only the orders and contracts shared with its linked supplier account.
+
+See [OPERATIONS.md](docs/OPERATIONS.md) for the complete demo, role matrix, data model, API map, business rules, and explicit limitations. All operations data is company-scoped. The new migration adds an `ops` schema and preserves existing HR and account records.

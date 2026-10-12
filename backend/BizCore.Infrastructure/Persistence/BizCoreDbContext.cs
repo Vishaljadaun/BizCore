@@ -1,4 +1,5 @@
-﻿using BizCore.Application.Common.Interfaces;
+using BizCore.Domain.Entities.Operations;
+using BizCore.Application.Common.Interfaces;
 using BizCore.Domain.Common;
 using BizCore.Domain.Entities;
 using BizCore.Domain.Entities.HR;
@@ -22,6 +23,20 @@ namespace BizCore.Infrastructure.Persistence
         {
             _currentUser = currentUser;
         }
+
+        public DbSet<WorkProject> WorkProjects => Set<WorkProject>();
+        public DbSet<ProjectTask> ProjectTasks => Set<ProjectTask>();
+        public DbSet<TimeEntry> TimeEntries => Set<TimeEntry>();
+        public DbSet<Supplier> Suppliers => Set<Supplier>();
+        public DbSet<SupplierContract> SupplierContracts => Set<SupplierContract>();
+        public DbSet<Product> Products => Set<Product>();
+        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+        public DbSet<PurchaseLine> PurchaseLines => Set<PurchaseLine>();
+        public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+        public DbSet<Invoice> Invoices => Set<Invoice>();
+        public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
+        public DbSet<InvoicePayment> InvoicePayments => Set<InvoicePayment>();
+        public DbSet<Expense> Expenses => Set<Expense>();
 
         public DbSet<Company> Companies => Set<Company>();
         public DbSet<User> Users => Set<User>();
@@ -52,6 +67,7 @@ namespace BizCore.Infrastructure.Persistence
             builder.Entity<User>().HasQueryFilter(u => IsSuperAdmin ||
                 (CurrentCompanyId.HasValue && u.CompanyId == CurrentCompanyId));
 
+            OperationsModel.Configure(builder);
             base.OnModelCreating(builder);
         }
 
