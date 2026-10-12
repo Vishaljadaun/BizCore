@@ -55,9 +55,9 @@ test('company onboarding, mobile employee attendance and immediate access revoca
     await page.getByLabel('Set Password', { exact: true }).fill(password);
     await page.getByLabel('Confirm Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Give Access', exact: true }).click();
-    await expect(row.getByText('Has Access', { exact: true })).toBeVisible();
+    await expect(row.getByText('Account linked', { exact: true })).toBeVisible();
     await page.reload();
-    await expect(row.getByText('Has Access', { exact: true })).toBeVisible();
+    await expect(row.getByText('Account linked', { exact: true })).toBeVisible();
   });
 
   // A separate browser context gives the employee their own cookies/localStorage.

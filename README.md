@@ -14,9 +14,9 @@ See [deployment configuration](docs/DEPLOYMENT.md). Follow the [operations demo]
 
 | Area | Status |
 | --- | --- |
-| Company registration and login | Implemented, with JWT access tokens and rotating refresh tokens. |
-| Company and user administration | Implemented screens and API handlers; a full authorization audit remains. |
-| Departments and employees | Creation/listing, employee-account linking, and profile viewing. Department update wiring remains incomplete. |
+| Company registration and login | JWT access/rotating refresh tokens, company-code login, password change and administrator-assisted recovery. |
+| Company and user administration | Company/user screens, current-account role checks, tenant-scoped mutations and protected administrator accounts. |
+| Departments and employees | Creation/listing, department/manager editing, employee editing, detail viewing, deactivation/reactivation and account linking. |
 | Employee self-service | Profile, leave balances, and daily clock-in/out. Employees can access only their own HR records; managers can manage active employees in their company. |
 | Attendance management | Company-scoped list, employee/date filters, pagination, clock actions, and CSV export of all matching records for a selected day. |
 | Leave workflow | Annual policies, employee application/history/cancellation, admin/manager reviews, reserved pending balances, and PostgreSQL transaction locks. |
@@ -26,7 +26,7 @@ See [deployment configuration](docs/DEPLOYMENT.md). Follow the [operations demo]
 | Vendors | Supplier directory, contract lifecycle, and a linked vendor portal for order acknowledgment. |
 | Finance | Draft/issued invoices, partial/full payment records, expenses, cash-flow totals, and CSV export in INR. |
 
-See [the completion plan](docs/COMPLETION.md) for findings and the next milestones.
+See [the administration guide](docs/ADMINISTRATION.md) for permission rules and password recovery, and [the completion plan](docs/COMPLETION.md) for remaining extensions.
 
 ## Technologies and structure
 
@@ -41,7 +41,7 @@ See [the completion plan](docs/COMPLETION.md) for findings and the next mileston
 
 Backend projects live under `backend/`; the frontend application is in **`frontend/bizcore-web/`**.
 
-The browser sends REST requests to the API. HR and administration controllers dispatch commands/queries to application handlers; operations controllers call a scoped application service. Infrastructure supplies PostgreSQL persistence and token services through dependency injection. Company IDs establish tenant context; personal HR actions also re-read the user's current account and employee link so stale JWT claims cannot preserve a removed link.
+The browser sends REST requests to the API. HR and administration controllers dispatch commands/queries to application handlers; operations controllers call a scoped application service. Infrastructure supplies PostgreSQL persistence and token services through dependency injection. Company IDs establish tenant context. Middleware re-reads account status, role and credential version before authorization; personal HR actions also re-read the user's current account and employee link so stale JWT claims cannot preserve a removed link.
 
 ## Local setup
 
@@ -91,7 +91,7 @@ dotnet user-secrets set "Seed:SuperAdminEmail" "YOUR_ADMIN_EMAIL"
 dotnet user-secrets set "Seed:SuperAdminPassword" "YOUR_PRIVATE_PASSWORD_AT_LEAST_12_CHARACTERS"
 ```
 
-Start the API once, then disable `Seed:Enabled`. The seeder does not reset an existing administrator or print the password. Existing databases created with the old default login retain that account: change its credentials through a controlled administrative process before exposing that database publicly. A password-change UI is not implemented yet.
+Start the API once, then disable `Seed:Enabled`. The seeder does not reset an existing administrator or print the password. Existing databases created with the old default login retain that account: change its credentials through a controlled administrative process before exposing that database publicly. Use **Account Security → Change password** while signed in.
 
 ## Configuration
 

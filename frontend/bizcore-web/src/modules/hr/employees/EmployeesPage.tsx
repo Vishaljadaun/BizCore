@@ -248,7 +248,7 @@ const EmployeesPage = () => {
                               text-green-600">
                               <span className="w-1.5 h-1.5
                                 rounded-full bg-green-500" />
-                              {emp.isActive ? 'Has Access' : 'Login disabled'}
+                              Account linked
                             </span>
                             {canManage && <button
                               onClick={() =>
@@ -267,7 +267,7 @@ const EmployeesPage = () => {
                               text-gray-400">
                               <span className="w-1.5 h-1.5
                                 rounded-full bg-gray-300" />
-                              No Access
+                              No account linked
                             </span>
                             {canManage && emp.isActive && <button
                               onClick={() =>

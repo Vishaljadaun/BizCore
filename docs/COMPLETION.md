@@ -31,25 +31,23 @@ Implemented in the HR completion update:
 
 Remaining policy features: holidays, half-days, carryover, proration, policy editing, and approved-leave cancellation.
 
-## Milestone 3 — finish administration and tenant boundaries
+## Milestone 3 — administration and tenant boundaries
 
-- Audit every company/user/HR endpoint, including code that bypasses query filters.
-- Resolve globally ambiguous email login: storage currently permits the same email in different companies, but login has no company selector.
-- Finish department update, employee edit/deactivate, and user password reset/change.
-- Verify employee/user links and employee-code generation under concurrent creation.
-- Review salary visibility, stale role claims outside the hardened HR endpoints, token storage/revocation, and audit logs.
-- Continue reviewing the platform-wide SuperAdmin experience; the company/employee overview now uses real records.
+Implemented: current-account middleware before role authorization; company-code login for ambiguous emails; department/manager editing; employee editing, viewing and deactivation; password change and administrator-assisted reset; privilege/last-admin checks; serialized employee-code allocation and linking. Targeted unit and real PostgreSQL browser/API tests cover these boundaries. See [ADMINISTRATION.md](ADMINISTRATION.md) for the explicit role matrix and limitations.
 
-## Milestone 4 — real database and deployment checks
+Remaining production work: granular salary permissions, MFA/email verification, emailed password recovery, rate limiting, hardened browser sessions and an independent security audit. Password/employee audit events are recorded; a complete audit-history interface remains an extension.
 
-- Added a PostgreSQL 16 + Chromium CI workflow for registration, login, employee creation/linking, mobile attendance and immediate link revocation. It starts the API twice against the same schema. See [TESTING.md](TESTING.md) for manual and automated checks.
-- Leave balance concurrency is now exercised against PostgreSQL. Still needed: broader constraint/concurrency tests, existing-record persistence assertions across process restarts, and the wider tenant audit.
-- Render frontend/API and Neon PostgreSQL are deployed, with Docker, CORS, and a process health endpoint. See DEPLOYMENT.md.
-- Verify persistence after restart, database backup/restore, responsive layouts, and keyboard interactions.
-- Define company timezones, shifts, overnight attendance, and correction approval before payroll use.
+## Milestone 4 — database and deployment checks
+
+- PostgreSQL 16 + Chromium CI runs the application workflows, then restarts the API against the same database and explicitly logs in to the pre-restart account and compares original company, user and department IDs.
+- CI dumps the populated disposable database, restores into a separate database, and compares row counts and hashes of all row values in every application table. The script accepts only the isolated CI container, never a production connection string.
+- `scripts/check-live-persistence.py` prepares fictional records before a live deployment and verifies the original IDs afterward. Keep its temporary credential checkpoint private and outside Git.
+- This verifies the recovery mechanism with test data. It does not configure a scheduled production backup, verify provider backup retention or perform a production restore. Those require an operator-owned backup schedule and recovery plan.
+- Render frontend/API and Neon PostgreSQL are deployed. See [DEPLOYMENT.md](DEPLOYMENT.md).
+- Company timezones, shifts, overnight attendance and correction approval remain prerequisites for payroll use.
 
 ## Milestone 5 — connected operations
 
 Implemented core workflows for Projects, Inventory, Vendors, and Finance. See [OPERATIONS.md](OPERATIONS.md): persistent data and responsive forms, employee task ownership, vendor supplier ownership, transaction-protected stock receipts and expense creation, recorded invoice payments, cash-flow reporting, and CSV export. Operations permissions re-read the current account and role on every request. Database/model consistency and real PostgreSQL concurrency are covered by automated checks.
 
-Remaining extensions include payroll, accounting journals, tax-compliant invoicing, payment gateways, refunds/credit notes, partial deliveries/returns, multi-warehouse stock, project budgets, password self-service, and a broader administration authorization audit. Completing core modules does not imply those advanced features are included.
+Remaining extensions include payroll, accounting journals, tax-compliant invoicing, payment gateways, refunds/credit notes, partial deliveries/returns, multi-warehouse stock, project budgets, and a complete audit-history interface. Completing core modules does not imply those advanced features are included.

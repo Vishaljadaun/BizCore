@@ -30,8 +30,8 @@ Use fictional information. The employee account needs a different email from the
 | --- | --- | --- |
 | Company registration | Open `/register`; enter a company name, your admin details and a password with uppercase, lowercase, digit and special character (at least 8 characters). | You reach the dashboard as CompanyAdmin. |
 | Department | Open HR → Departments; choose **Add Department** and create Engineering. | Engineering appears in the list. |
-| Employee | Open HR → Employees; choose **Add Employee**, fill in the required fields and choose Engineering. | The employee appears with **No Access**. |
-| Login access | Choose **Give Access**, set and confirm a strong test password. | The row changes to **Has Access**. |
+| Employee | Open HR → Employees; choose **Add Employee**, fill in the required fields and choose Engineering. | The employee appears with **No account linked**. |
+| Login access | Choose **Give Access**, set and confirm a strong test password. | The row changes to **Account linked**. |
 | Separate login | Open an incognito/private window and sign in with the employee's email and password. | The employee has their own session. Two normal tabs share login storage, so use separate browser profiles or a private window. |
 | Attendance | In the employee window, open **My Profile**, choose **Clock In**, refresh, then **Clock Out**. | The saved clock-in survives refresh; worked hours appear after clock-out. A short demo can show 0 hours and HalfDay. |
 | Admin review | In the admin window, open HR → Attendance for today's date. | The employee's attendance is visible. |
@@ -80,13 +80,15 @@ Open [GitHub Actions](https://github.com/Vishaljadaun/BizCore/actions), select t
 
 The browser report is attached as `browser-test-report`. Failure traces can include fictional test records and disposable authentication tokens; don't upload traces from a real customer database.
 
-The second browser run verifies that startup migrations can be applied again safely. It creates new test records; it does not replace the manual check of old records after restart.
+The second run also sets `BIZCORE_VERIFY_PERSISTENCE=true`: `persistence.e2e.ts` reads the private checkpoint from the first run, logs in with the same credentials, and asserts the original user, company and department IDs. A missing checkpoint fails instead of creating replacement records. The file is ignored by Git and excluded from report artifacts.
+
+After the API stops, CI executes `scripts/check-ci-recovery.sh`. PostgreSQL 16 dumps the populated test database, restores it to a separate disposable database, and compares counts and hashes of complete row values in every application table. Only test data is used; no production database is restored or modified. This does not set up a production backup schedule.
 
 Opening `localhost` on your phone refers to the phone, not your computer. Use **https://bizcore-web.onrender.com/#/login** for the hosted version instead.
 
 ## What is outside this test
 
-The browser workflow now also covers mobile leave applications, admin approval/rejection, employee cancellation, CSV download, company overview counts, and simultaneous leave applications/duplicate decisions. Projects, inventory, vendors and finance remain planned. These checks do not establish complete tenant isolation, payroll accuracy, concurrency safety outside leave, or production readiness. See [the completion plan](COMPLETION.md).
+The browser workflow now also covers mobile leave applications, admin approval/rejection, employee cancellation, CSV download, company overview counts, and simultaneous leave applications/duplicate decisions. The connected operations test covers Projects, Inventory, Vendors and Finance, including duplicate receipt/payment attempts and vendor ownership. Administration tests cover editing, password reset/change, company-code login, deactivation and stale roles. These targeted checks do not establish complete tenant isolation, payroll accuracy or production readiness. See [the completion plan](COMPLETION.md).
 
 ## Troubleshooting
 
@@ -107,3 +109,21 @@ The browser workflow now also covers mobile leave applications, admin approval/r
 Leave uses whole Monday–Friday days without public-holiday exclusions or carryover. A request cannot span calendar years. Admins and managers can also apply using a linked employee profile, but another reviewer must decide their request.
 
 The CI browser report includes desktop dashboard and 390px mobile leave screenshots. The PostgreSQL test concurrently requests the last available leave day and submits two approvals of one request: only one application and one decision may succeed.
+
+## Administration and recovery
+
+Follow [ADMINISTRATION.md](ADMINISTRATION.md) for the new screens and security rules. CI runs four browser/API scenarios twice: employee/leave workflow, connected operations, administration/account security, and persistence. Backend handler and frontend regression suites run separately.
+
+For an authorized live deployment check, run from the repository root before deployment:
+
+```sh
+python scripts/check-live-persistence.py prepare --checkpoint /tmp/bizcore-persistence.json
+```
+
+After the deployment is live:
+
+```sh
+python scripts/check-live-persistence.py verify --checkpoint /tmp/bizcore-persistence.json
+```
+
+The file contains only the newly created fictional account's credentials. Keep it private, never commit or attach it to CI reports, and remove it after verification. Preparation refuses to overwrite an existing checkpoint. Live smoke scripts create clearly named fictional company records; they do not touch another company's records.
