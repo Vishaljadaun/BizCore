@@ -27,7 +27,7 @@ test('connected operations persist, enforce ownership and serialize money and st
   };
   const admin = await register('ops');
   const headers = { Authorization: `Bearer ${admin.accessToken}` };
-  const post = async (path: string, data: unknown) => { const r = await request.post(`${root}/${path}`, { headers, data }); expect(r.status(), await r.text()).toBe(201); return r.json(); };
+  const post = async (path: string, data: unknown, expected = 201) => { const r = await request.post(`${root}/${path}`, { headers, data }); expect(r.status(), await r.text()).toBe(expected); return r.json(); };
   const get = async (path: string) => { const r = await request.get(`${root}/operations/${path}`, { headers }); expect(r.status(), await r.text()).toBe(200); return r.json(); };
   const put = async (path: string, data: unknown) => { const r = await request.put(`${root}/operations/${path}`, { headers, data }); expect(r.status(), await r.text()).toBe(200); return r.json(); };
   const employee = await post('users', { firstName: 'Asha', lastName: 'Worker', email: `worker-${suffix}@example.com`, password, role: 'Employee' });
@@ -174,7 +174,7 @@ test('connected operations persist, enforce ownership and serialize money and st
   });
   await test.step('A failed multi-line receipt rolls back all stock and expense changes', async () => {
     const full = await post('operations/products', { sku: 'FULL', name: 'Capacity test', unit: 'units', reorderLevel: 0, unitCost: 1, isActive: true });
-    await post(`operations/products/${full.id}/stock`, { delta: 999999, reason: 'Test capacity boundary', requestId: randomUUID() });
+    await post(`operations/products/${full.id}/stock`, { delta: 999999, reason: 'Test capacity boundary', requestId: randomUUID() }, 200);
     const attempt = await post('operations/orders', { supplierId: supplier.id, expectedDate: null, notes: '', lines: [{ productId: product.id, quantity: 1, unitCost: 100 }, { productId: full.id, quantity: 2, unitCost: 1 }] });
     await put(`orders/${attempt.id}/status`, { status: 'Placed' });
     const result = await request.put(`${root}/operations/orders/${attempt.id}/status`, { headers, data: { status: 'Received' } }); expect(result.status()).toBe(409);
