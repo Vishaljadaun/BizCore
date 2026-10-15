@@ -2,7 +2,9 @@ import { useState }    from 'react';
 import { useForm }     from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z }           from 'zod';
-import { AxiosError }  from 'axios';
+import api from '../../../api/axiosClient';
+import { Dialog } from '../../operations/ui';
+import { errorText } from '../../operations/errors';
 import type { DepartmentResponse } from '../../../types';
 import { hrApi }       from '../../../api/hrApi';
 import Input           from '../../../components/shared/Input';
@@ -24,12 +26,14 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 interface Props {
+  employee?: import('../../../types').EmployeeResponse;
   departments: DepartmentResponse[];
   onClose:     () => void;
   onSuccess:   () => void;
 }
 
 const CreateEmployeeModal = ({
+  employee,
   departments,
   onClose,
   onSuccess,
@@ -41,12 +45,12 @@ const CreateEmployeeModal = ({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<FormData>({ resolver: zodResolver(schema), defaultValues: employee ? { ...employee, phone: employee.phone || '', joiningDate: employee.joiningDate.slice(0, 10) } : undefined });
 
   const onSubmit = async (data: FormData) => {
     try {
       setServerError(null);
-      await hrApi.createEmployee({
+      const payload = {
         firstName:    data.firstName,
         lastName:     data.lastName,
         email:        data.email,
@@ -55,39 +59,17 @@ const CreateEmployeeModal = ({
         departmentId: data.departmentId,
         joiningDate:  data.joiningDate,
         salary:       data.salary,
-      });
+      };
+      if (employee) await api.put(`/hr/employees/${employee.id}`, payload);
+      else await hrApi.createEmployee(payload);
       onSuccess();
     } catch (error) {
-      if (error instanceof AxiosError) {
-        setServerError(
-          error.response?.data?.message ||
-          'Failed to create employee.'
-        );
-      }
+      setServerError(errorText(error));
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50
-      flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl
-        w-full max-w-lg animate-fade-in
-        max-h-[90vh] overflow-y-auto">
-
-        <div className="flex items-center justify-between
-          px-6 py-4 border-b border-gray-100 sticky top-0
-          bg-white">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Add Employee
-          </h2>
-          <button onClick={onClose}
-            className="text-gray-400 hover:text-gray-600
-              w-8 h-8 flex items-center justify-center
-              rounded-lg hover:bg-gray-100">
-            ✕
-          </button>
-        </div>
-
+    <Dialog title={employee ? 'Edit Employee' : 'Add Employee'} close={onClose} busy={isSubmitting}>
         <form onSubmit={handleSubmit(onSubmit)}
           className="p-6 flex flex-col gap-4" noValidate>
 
@@ -98,7 +80,7 @@ const CreateEmployeeModal = ({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input label="First Name" placeholder="John"
               error={errors.firstName?.message}
               {...register('firstName')} />
@@ -151,7 +133,7 @@ const CreateEmployeeModal = ({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label htmlFor="employee-joining-date" className="text-sm font-medium
                 text-gray-700">
@@ -177,7 +159,7 @@ const CreateEmployeeModal = ({
             </div>
 
             <Input label="Salary (₹)"
-              type="number"
+              type="number" step="0.01"
               placeholder="50000"
               error={errors.salary?.message}
               {...register('salary', { valueAsNumber: true })}
@@ -186,17 +168,16 @@ const CreateEmployeeModal = ({
 
           <div className="flex gap-3 mt-2">
             <Button type="button" variant="secondary"
-              fullWidth onClick={onClose}>
+              fullWidth disabled={isSubmitting} onClick={onClose}>
               Cancel
             </Button>
             <Button type="submit" fullWidth
               isLoading={isSubmitting}>
-              Add Employee
+              {employee ? 'Save Employee' : 'Add Employee'}
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </Dialog>
   );
 };
 

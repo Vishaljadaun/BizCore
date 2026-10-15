@@ -11,6 +11,7 @@ import Button                from '../../components/shared/Button';
 
 // ── Zod Schema ─────────────────────────────────────────────────────────────
 const loginSchema = z.object({
+  companyCode: z.string().trim().optional(),
   email: z
     .string()
     .min(1, 'Email is required')
@@ -24,7 +25,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 // ── LoginPage ──────────────────────────────────────────────────────────────
 const LoginPage = () => {
-  const navigate                        = useNavigate();
+  const navigate = useNavigate();
+  const notice = useAuthStore(s => s.notice);
   const login                           = useAuthStore((state) => state.login);
   const [serverError,  setServerError]  = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -261,7 +263,7 @@ const LoginPage = () => {
       setServerError(null);
       const response = await authApi.login(data);
       login(response);
-      navigate('/dashboard');
+      navigate(response.user.mustChangePassword ? '/account-security' : '/dashboard');
     } catch (error) {
       if (error instanceof AxiosError) {
         setServerError(error.response?.data?.message || 'Login failed. Please try again.');
@@ -336,6 +338,7 @@ const LoginPage = () => {
             </p>
           </div>
 
+          {notice && <p role="status" className="mb-4 text-emerald-300">{notice}</p>}
           {/* Server error */}
           {serverError && (
             <div className="bg-rose-500/10 border border-rose-500/30
@@ -399,7 +402,8 @@ const LoginPage = () => {
               </button>
             </div>
 
-            <p className="text-xs text-slate-400">Password recovery is not available in this portfolio version.</p>
+            <Input label="Company code (optional)" autoComplete="organization" placeholder="e.g. acme-company" {...register('companyCode')} />
+            <p className="text-xs text-slate-400">Use your company code if your email belongs to more than one company. Forgot your password? Ask your company administrator to reset it.</p>
 
             {/* Glowing submit button */}
             <div className="relative group/btn mt-2">

@@ -47,6 +47,7 @@ export const navigation: NavItem[] = [
     { label: 'Cash-flow Report', path: '/finance/reports', icon: '▥', roles: admins },
   ] },
   { label: 'User Management', path: '/users', icon: '⚿', roles: admins },
+  { label: 'Account Security', path: '/account-security', icon: '⚿', roles: [...staff, UserRole.Vendor] },
   { label: 'Companies', path: '/companies', icon: '▤', roles: [UserRole.SuperAdmin] },
 ];
-export const vendorNavigation: NavItem[] = [navigation[0], { label: 'Vendor Portal', path: '/vendor-portal', icon: '◇', roles: [UserRole.Vendor] }];
+export const vendorNavigation: NavItem[] = [navigation[0], navigation.find(item => item.path === '/account-security')!, { label: 'Vendor Portal', path: '/vendor-portal', icon: '◇', roles: [UserRole.Vendor] }];

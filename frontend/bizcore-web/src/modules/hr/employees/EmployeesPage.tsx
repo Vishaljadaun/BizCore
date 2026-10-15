@@ -1,4 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuthStore } from '../../../store/authStore';
+import api from '../../../api/axiosClient';
+import { Dialog, button, primary, muted } from '../../operations/ui';
+import { errorText } from '../../operations/errors';
 import { AxiosError }   from 'axios';
 import { hrApi }        from '../../../api/hrApi';
 import type {
@@ -11,6 +15,13 @@ import CreateEmployeeModal   from './CreateEmployeeModal';
 import GiveLoginAccessModal  from './GiveLoginAccessModal';
 
 const EmployeesPage = () => {
+  const role = useAuthStore(s => s.user?.role);
+  const canManage = role === 'CompanyAdmin' || role === 'SuperAdmin';
+  const [editing, setEditing] = useState<EmployeeResponse | null>(null);
+  const [viewing, setViewing] = useState<EmployeeResponse | null>(null);
+  const [statusEmployee, setStatusEmployee] = useState<EmployeeResponse | null>(null);
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [statusError, setStatusError] = useState('');
   const [data,        setData]        =
     useState<PaginatedResponse<EmployeeResponse> | null>(null);
   const [departments, setDepartments] =
@@ -84,9 +95,7 @@ const EmployeesPage = () => {
             {data?.totalCount ?? 0} total employees
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          + Add Employee
-        </Button>
+        {canManage && <Button onClick={() => setShowCreate(true)}>+ Add Employee</Button>}
       </div>
 
       {/* Filters */}
@@ -239,9 +248,9 @@ const EmployeesPage = () => {
                               text-green-600">
                               <span className="w-1.5 h-1.5
                                 rounded-full bg-green-500" />
-                              Has Access
+                              Account linked
                             </span>
-                            <button
+                            {canManage && <button
                               onClick={() =>
                                 handleRevokeAccess(emp)
                               }
@@ -249,7 +258,7 @@ const EmployeesPage = () => {
                                 hover:underline text-left"
                             >
                               Revoke
-                            </button>
+                            </button>}
                           </div>
                         ) : (
                           <div className="flex flex-col gap-0.5">
@@ -258,9 +267,9 @@ const EmployeesPage = () => {
                               text-gray-400">
                               <span className="w-1.5 h-1.5
                                 rounded-full bg-gray-300" />
-                              No Access
+                              No account linked
                             </span>
-                            <button
+                            {canManage && emp.isActive && <button
                               onClick={() =>
                                 setAccessEmployee(emp)
                               }
@@ -269,7 +278,7 @@ const EmployeesPage = () => {
                                 text-left font-medium"
                             >
                               + Give Access
-                            </button>
+                            </button>}
                           </div>
                         )}
                       </td>
@@ -294,12 +303,7 @@ const EmployeesPage = () => {
 
                       {/* Actions */}
                       <td className="px-6 py-4">
-                        <button
-                          className="text-primary-600
-                            hover:underline text-sm font-medium"
-                        >
-                          View →
-                        </button>
+                        <div className="flex flex-wrap gap-2"><button className={button} onClick={() => setViewing(emp)}>View</button>{canManage && <><button className={button} onClick={() => setEditing(emp)}>Edit</button><button className={button} onClick={() => { setStatusError(''); setStatusEmployee(emp); }}>{emp.isActive ? 'Deactivate' : 'Reactivate'}</button></>}</div>
                       </td>
                     </tr>
                   ))}
@@ -336,6 +340,9 @@ const EmployeesPage = () => {
         )}
       </div>
 
+      {editing && <CreateEmployeeModal employee={editing} departments={departments} onClose={() => setEditing(null)} onSuccess={() => { setEditing(null); void fetchEmployees(); }} />}
+      {viewing && <Dialog title={viewing.fullName} close={() => setViewing(null)}><dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">{Object.entries({ 'Employee code': viewing.employeeCode, Email: viewing.email, Phone: viewing.phone || 'Not provided', Department: viewing.departmentName, Designation: viewing.designation, 'Joining date': viewing.joiningDate.slice(0, 10), 'Salary (INR)': viewing.salary.toLocaleString('en-IN'), Status: viewing.isActive ? 'Active' : 'Inactive' }).map(([label, value]) => <div key={label}><dt className={muted}>{label}</dt><dd className="break-words font-medium">{value}</dd></div>)}</dl></Dialog>}
+      {statusEmployee && <Dialog title={`${statusEmployee.isActive ? 'Deactivate' : 'Reactivate'} employee`} close={() => setStatusEmployee(null)} busy={statusBusy}><div className="space-y-4"><p>{statusEmployee.fullName}</p><p className={muted}>{statusEmployee.isActive ? 'This preserves employee history and disables their linked login. Open attendance must be clocked out first.' : 'This reactivates the employee record. Reactivate their login separately in User Management when they should regain access.'}</p>{statusError && <p role="alert" className="text-sm text-red-600">{statusError}</p>}<button className={primary} disabled={statusBusy} onClick={async () => { setStatusBusy(true); setStatusError(''); try { await api.put(`/hr/employees/${statusEmployee.id}/status`, { isActive: !statusEmployee.isActive }); setStatusEmployee(null); await fetchEmployees(); } catch (err) { setStatusError(errorText(err)); } finally { setStatusBusy(false); } }}>{statusBusy ? 'Saving…' : 'Confirm'}</button></div></Dialog>}
       {/* Create Employee Modal */}
       {showCreate && (
         <CreateEmployeeModal

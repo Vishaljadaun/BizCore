@@ -29,6 +29,10 @@ const ProtectedRoute = ({ allowedRoles }: Props) => {
     );
   }
 
+  if (user?.mustChangePassword && location.pathname !== '/account-security') {
+    return <Navigate to="/account-security" replace />;
+  }
+
   // Logged in but wrong role → redirect to unauthorized page
   if (
     allowedRoles &&

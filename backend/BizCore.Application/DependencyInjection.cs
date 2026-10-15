@@ -39,6 +39,8 @@ namespace BizCore.Application
             services.AddValidatorsFromAssembly(
                 Assembly.GetExecutingAssembly());
 
+            services.AddScoped<BizCore.Application.Security.PasswordService>();
+            services.AddScoped<BizCore.Application.HR.Employees.EditEmployeeService>();
             services.AddScoped<BizCore.Application.Operations.OperationsService>();
             return services;
         }

@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import ResetPasswordModal from './components/ResetPasswordModal';
+import { useAuthStore } from '../../store/authStore';
+import { errorText } from '../operations/errors';
 import { usersApi }      from '../../api/usersApi';
 import type {
   UserResponse,
@@ -19,6 +22,9 @@ const roleBadgeColor: Record<string, string> = {
 };
 
 const UserManagementPage = () => {
+  const current = useAuthStore(s => s.user);
+  const [resetUser, setResetUser] = useState<UserResponse | null>(null);
+  const canManage = (target: UserResponse) => target.id !== current?.id && target.role !== 'SuperAdmin' && (target.role !== 'CompanyAdmin' || current?.role === 'SuperAdmin');
   // ── State ──────────────────────────────────────────
   const [data,       setData]       =
     useState<PaginatedResponse<UserResponse> | null>(null);
@@ -90,8 +96,8 @@ const UserManagementPage = () => {
           ),
         };
       });
-    } catch {
-      setError('Failed to update user status.');
+    } catch (err) {
+      setError(errorText(err));
     } finally {
       setTogglingId(null);
     }
@@ -288,7 +294,8 @@ const UserManagementPage = () => {
                       <td className="px-6 py-4">
                         <button
                           onClick={() => handleToggleStatus(user)}
-                          disabled={togglingId === user.id}
+                          disabled={togglingId === user.id || !canManage(user)}
+                          aria-label={`${user.isActive ? 'Deactivate' : 'Activate'} ${user.fullName}`}
                           className={`
                             relative inline-flex h-5 w-9
                             rounded-full transition-colors duration-200
@@ -352,7 +359,9 @@ const UserManagementPage = () => {
                       <td className="px-6 py-4">
                         <div className="flex items-center
                           justify-end gap-2">
+                          {canManage(user) && <button className="text-sm text-primary-600 hover:underline" onClick={() => setResetUser(user)}>Reset password</button>}
                           <button
+                            disabled={!canManage(user) && user.id !== current?.id}
                             onClick={() => setEditUser(user)}
                             className="text-gray-400 hover:text-primary-600
                               transition-colors text-sm px-2 py-1
@@ -362,6 +371,7 @@ const UserManagementPage = () => {
                             ✏️
                           </button>
                           <button
+                            disabled={!canManage(user)}
                             onClick={() => setDeleteUser(user)}
                             className="text-gray-400 hover:text-red-600
                               transition-colors text-sm px-2 py-1
@@ -447,6 +457,7 @@ const UserManagementPage = () => {
         )}
       </div>
 
+      {resetUser && <ResetPasswordModal user={resetUser} onClose={() => setResetUser(null)} />}
       {/* ── Modals ────────────────────────────────────── */}
       {showCreate && (
         <CreateUserModal

@@ -98,6 +98,7 @@ app.UseCors("BizCoreFrontend");
 // Render terminates HTTPS at its edge; internal container traffic is HTTP.
 if (app.Environment.IsDevelopment()) app.UseHttpsRedirection();
 app.UseAuthentication();   // JWT token read karo
+app.UseMiddleware<CurrentAccountMiddleware>();
 app.UseAuthorization();    // Permissions check karo
 app.MapControllers();
 // Startup completes only after database migrations succeed.

@@ -35,6 +35,7 @@ public class LinkEmployeeToUserCommandHandler
             ?? throw new ForbiddenAccessException(
                 "Company context not found.");
 
+        return await _context.WithEmployeeLockAsync(companyId, async () => {
         var employee = await _context.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(e =>
@@ -57,6 +58,8 @@ public class LinkEmployeeToUserCommandHandler
             throw new NotFoundException(
                 "User", command.UserId);
 
+        if (!employee.IsActive || !user.IsActive || user.Role == BizCore.Domain.Enums.UserRole.Vendor)
+            throw new ValidationException("userId", "Both employee and staff account must be active.");
         if (employee.UserId.HasValue)
             throw new ConflictException(
                 "Employee is already linked to a user.");
@@ -71,6 +74,7 @@ public class LinkEmployeeToUserCommandHandler
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
+        }, cancellationToken);
     }
 }
 
@@ -100,6 +104,7 @@ public class UnlinkEmployeeFromUserCommandHandler
             ?? throw new ForbiddenAccessException(
                 "Company context not found.");
 
+        return await _context.WithEmployeeLockAsync(companyId, async () => {
         var employee = await _context.Employees
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(e =>
@@ -118,7 +123,7 @@ public class UnlinkEmployeeFromUserCommandHandler
         var user = await _context.Users
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u =>
-                u.Id == employee.UserId.Value,
+                u.Id == employee.UserId.Value && u.CompanyId == companyId,
                 cancellationToken);
 
         if (user != null)
@@ -129,6 +134,7 @@ public class UnlinkEmployeeFromUserCommandHandler
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
+        }, cancellationToken);
     }
 }
 

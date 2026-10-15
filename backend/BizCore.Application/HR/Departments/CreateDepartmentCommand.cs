@@ -39,6 +39,7 @@ public class CreateDepartmentCommandHandler
             throw new ForbiddenAccessException(
                 "Company context not found.");
 
+        return await _context.WithEmployeeLockAsync(_currentUser.CompanyId.Value, async () => {
         // Check duplicate name in same company
         var exists = await _context.Departments
             .IgnoreQueryFilters()
@@ -73,6 +74,7 @@ public class CreateDepartmentCommandHandler
                 department.IsActive,
                 department.CreatedAt
             ), 201);
+        }, cancellationToken);
     }
 }
 

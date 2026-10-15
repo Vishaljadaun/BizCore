@@ -26,6 +26,11 @@ axiosClient.interceptors.request.use((config) => {
 
 axiosClient.interceptors.response.use(response => response, async (error: AxiosError) => {
   const request = error.config as RetryRequest | undefined;
+  const state = useAuthStore.getState();
+  if (request?._sessionRevision === state.sessionRevision && error.response?.status === 403 &&
+      (error.response.data as { code?: string })?.code === 'password_change_required' && state.user) {
+    useAuthStore.setState({ user: { ...state.user, mustChangePassword: true } });
+  }
   // Invalid login credentials belong on the login form, not in a refresh loop.
   if (!request || error.response?.status !== 401 || request._retry ||
       /\/auth\/(login|register|refresh|logout)(?:\?|$)/.test(request.url || '')) {

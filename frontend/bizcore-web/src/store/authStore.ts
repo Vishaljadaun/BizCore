@@ -9,6 +9,7 @@ import type { User, AuthResponse } from '../types';
 //             Simple API, no Provider wrapper needed, built-in persistence
 
 interface AuthState {
+  notice: string | null;
   sessionRevision: number;
   renewSession: (data: AuthResponse) => void;
   // ── State (data stored in the store) ──────────────────────────────────────
@@ -19,7 +20,7 @@ interface AuthState {
 
   // ── Actions (functions to modify state) ───────────────────────────────────
   login:        (data: AuthResponse) => void;
-  logout:       () => void;
+  logout:       (notice?: string) => void;
   updateTokens: (accessToken: string, refreshToken: string) => void;
 }
 
@@ -29,6 +30,7 @@ export const useAuthStore = create<AuthState>()(
   // Without persist: every page refresh = logged out
   persist(
     (set, get) => ({
+      notice: null,
       sessionRevision: 0,
       renewSession: (data) => set({ user: data.user, accessToken: data.accessToken, refreshToken: data.refreshToken }),
       // Initial state — user not logged in
@@ -41,6 +43,7 @@ export const useAuthStore = create<AuthState>()(
       login: (data: AuthResponse) => {
         set({
           sessionRevision: get().sessionRevision + 1,
+          notice: null,
           user:            data.user,
           accessToken:     data.accessToken,
           refreshToken:    data.refreshToken,
@@ -51,9 +54,10 @@ export const useAuthStore = create<AuthState>()(
       },
 
       // Called on logout — clears everything
-      logout: () => {
+      logout: (notice) => {
         set({
           sessionRevision: get().sessionRevision + 1,
+          notice: notice ?? null,
           user:            null,
           accessToken:     null,
           refreshToken:    null,

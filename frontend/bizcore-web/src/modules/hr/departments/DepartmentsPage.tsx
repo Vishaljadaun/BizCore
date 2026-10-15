@@ -14,6 +14,7 @@ const DepartmentsPage = () => {
   const [error,       setError]       = useState<string | null>(null);
   const [search,      setSearch]      = useState('');
   const [page,        setPage]        = useState(1);
+  const [editing, setEditing] = useState<DepartmentResponse | null>(null);
   const [showCreate,  setShowCreate]  = useState(false);
 
   const fetchDepartments = useCallback(async () => {
@@ -120,6 +121,7 @@ const DepartmentsPage = () => {
                 </span>
               </div>
 
+              <button className="float-right text-sm text-primary-600 hover:underline" onClick={() => setEditing(dept)} aria-label={`Edit ${dept.name}`}>Edit</button>
               <h3 className="font-semibold text-gray-900 dark:text-slate-100">
                 {dept.name}
               </h3>
@@ -166,6 +168,8 @@ const DepartmentsPage = () => {
         </div>
       )}
 
+      {data && data.totalPages > 1 && <div className="mt-4 flex flex-wrap items-center justify-between gap-3"><Button variant="secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>Previous</Button><span>Page {page} of {data.totalPages}</span><Button variant="secondary" disabled={page >= data.totalPages} onClick={() => setPage(p => p + 1)}>Next</Button></div>}
+      {editing && <CreateDepartmentModal department={editing} onClose={() => setEditing(null)} onSuccess={() => { setEditing(null); void fetchDepartments(); }} />}
       {/* Create Modal */}
       {showCreate && (
         <CreateDepartmentModal

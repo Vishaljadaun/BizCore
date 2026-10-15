@@ -22,6 +22,14 @@ public class UsersController : ControllerBase
         _mediator = mediator;
     }
 
+    [HttpPost("{id:guid}/reset-password"), Authorize(Roles = "SuperAdmin,CompanyAdmin")]
+    public async Task<IActionResult> ResetPassword(Guid id, BizCore.Application.Security.ResetPasswordInput input,
+        [FromServices] BizCore.Application.Security.PasswordService passwords, CancellationToken ct)
+    {
+        await passwords.Reset(id, input, ct);
+        return Ok(new { message = "Temporary password set. Share it privately; the user must change it at next sign-in." });
+    }
+
     // ──────────────────────────────────────────────────
     // GET api/users
     // GET api/users?search=rajesh&role=Manager&page=1&pageSize=10

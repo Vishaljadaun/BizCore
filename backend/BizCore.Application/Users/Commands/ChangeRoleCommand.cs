@@ -1,10 +1,11 @@
-﻿namespace BizCore.Application.Users.Commands;
+using BizCore.Application.Security;
+using BizCore.Domain.Enums;
+namespace BizCore.Application.Users.Commands;
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
 using BizCore.Application.Common.Models;
 using BizCore.Domain.Entities;
-using BizCore.Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -31,13 +32,8 @@ public class ChangeRoleCommandHandler
         ChangeRoleCommand command,
         CancellationToken cancellationToken)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(
-                u => u.Id == command.UserId,
-                cancellationToken);
+        return await AccountAccess.Mutate(_context, _currentUser, command.UserId, async (caller, user) => {
 
-        if (user == null)
-            throw new NotFoundException(nameof(User), command.UserId);
 
         // Cannot change own role
         // Prevents admin from accidentally locking themselves out
@@ -50,9 +46,14 @@ public class ChangeRoleCommandHandler
             throw new ForbiddenAccessException(
                 "Cannot assign SuperAdmin role.");
 
+        if (!Enum.IsDefined(command.NewRole)) throw new ValidationException("role", "Choose a valid role.");
+        if (command.NewRole == UserRole.CompanyAdmin && caller.Role != UserRole.SuperAdmin)
+            throw new ForbiddenAccessException("Only a platform administrator can assign CompanyAdmin.");
+        if (command.NewRole != user.Role) await AccountAccess.ProtectLastAdmin(_context, user, cancellationToken);
         user.Role = command.NewRole;
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
+        }, cancellationToken);
     }
 }

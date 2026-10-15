@@ -10,7 +10,8 @@ namespace BizCore.Application.Auth.Commands;
 
 public record LoginCommand(
     string Email,
-    string Password
+    string Password,
+    string? CompanyCode = null
 ) : IRequest<Result<AuthResponse>>;
 
 
@@ -35,12 +36,15 @@ public class LoginCommandHandler
         // ── Step 1: Find user by email ─────────────────────
         // IgnoreQueryFilters() because we don't have a tenant
         // context yet — we're trying to establish it!
-        var user = await _context.Users
-            .IgnoreQueryFilters()
-            .Include(u => u.Company) // Load company in same query
-            .FirstOrDefaultAsync(
-                u => u.Email == request.Email.ToLower().Trim(),
-                cancellationToken);
+        var candidates = await _context.Users.IgnoreQueryFilters().AsNoTracking()
+            .Where(u => u.Email == request.Email.ToLower().Trim() &&
+                (string.IsNullOrWhiteSpace(request.CompanyCode) || u.Company.Slug == request.CompanyCode.Trim().ToLower()))
+            .Select(u => u.Id).Take(2).ToListAsync(cancellationToken);
+        if (candidates.Count != 1)
+            return Result<AuthResponse>.Failure("Invalid email, password or company code. If your email is used in multiple companies, enter the company code.", 401);
+        return await _context.WithEmployeeLockAsync(candidates[0], async () => {
+        var user = await _context.Users.IgnoreQueryFilters().Include(u => u.Company)
+            .FirstOrDefaultAsync(u => u.Id == candidates[0], cancellationToken);
 
         // ── Step 2: Validate user exists ──────────────────
         if (user == null)
@@ -117,11 +121,14 @@ public class LoginCommandHandler
                 Email: user.Email,
                 Role: user.Role.ToString(),
                 CompanyId: user.CompanyId,
-                CompanyName: user.Company.Name
+                CompanyName: user.Company.Name,
+                    CompanyCode: user.Company.Slug,
+                    MustChangePassword: user.MustChangePassword
             )
         );
 
         return Result<AuthResponse>.Success(response);
+        }, cancellationToken);
     }
 }
 

@@ -1,4 +1,6 @@
-﻿namespace BizCore.Application.Users.Commands;
+using BizCore.Application.Security;
+using BizCore.Domain.Enums;
+namespace BizCore.Application.Users.Commands;
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
@@ -28,22 +30,21 @@ public class DeleteUserCommandHandler
         DeleteUserCommand command,
         CancellationToken cancellationToken)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(
-                u => u.Id == command.UserId,
-                cancellationToken);
+        return await AccountAccess.Mutate(_context, _currentUser, command.UserId, async (caller, user) => {
 
-        if (user == null)
-            throw new NotFoundException(nameof(User), command.UserId);
 
         // Cannot delete yourself
         if (user.Id == _currentUser.UserId)
             throw new ForbiddenAccessException(
                 "You cannot delete your own account.");
 
+        await AccountAccess.ProtectLastAdmin(_context, user, cancellationToken);
+        foreach (var employee in await _context.Employees.IgnoreQueryFilters().Where(x => x.CompanyId == user.CompanyId && x.UserId == user.Id).ToListAsync(cancellationToken)) employee.UserId = null;
+        foreach (var supplier in await _context.Suppliers.Where(x => x.CompanyId == user.CompanyId && x.PortalUserId == user.Id).ToListAsync(cancellationToken)) supplier.PortalUserId = null;
         _context.Users.Remove(user);
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result.Success();
+        }, cancellationToken);
     }
 }

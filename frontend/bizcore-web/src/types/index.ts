@@ -24,6 +24,8 @@ export interface User {
   isActive:    boolean;
   companyId:   string;
   companyName: string;
+  companyCode?: string;
+  mustChangePassword?: boolean;
   employeeId?: string | null;
   // ↑ New: linked employee ID from JWT
 }
@@ -40,6 +42,7 @@ export interface Company {
 // ── Auth Request/Response Shapes ──────────────────────────────────────────────
 
 export interface LoginRequest {
+  companyCode?: string;
   email:    string;
   password: string;
 }

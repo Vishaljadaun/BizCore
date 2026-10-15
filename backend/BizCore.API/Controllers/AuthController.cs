@@ -64,7 +64,8 @@ public class AuthController : ControllerBase
     {
         var command = new LoginCommand(
             request.Email,
-            request.Password
+            request.Password,
+            request.CompanyCode
         );
 
         var result = await _mediator.Send(command);
@@ -123,6 +124,14 @@ public class AuthController : ControllerBase
     // Current logged in user ki info
     // Token se directly read karta hai — no DB call
     // ─────────────────────────────────────────────────
+    [HttpPost("change-password"), Authorize]
+    public async Task<IActionResult> ChangePassword(BizCore.Application.Security.ChangePasswordInput input,
+        [FromServices] BizCore.Application.Security.PasswordService passwords, CancellationToken ct)
+    {
+        await passwords.Change(input, ct);
+        return Ok(new { message = "Password changed. Sign in again on each device." });
+    }
+
     [HttpGet("me")]
     [Authorize]
     public IActionResult Me()
@@ -147,7 +156,9 @@ public class AuthController : ControllerBase
             role,
             companyId,
             firstName,
-            lastName
+            lastName,
+            companyCode = User.FindFirst("company_code")?.Value,
+            mustChangePassword = User.FindFirst("must_change_password")?.Value == "True"
         });
     }
 }

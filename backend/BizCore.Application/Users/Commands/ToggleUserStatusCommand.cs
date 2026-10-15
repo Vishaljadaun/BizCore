@@ -1,4 +1,6 @@
-﻿namespace BizCore.Application.Users.Commands;
+using BizCore.Application.Security;
+using BizCore.Domain.Enums;
+namespace BizCore.Application.Users.Commands;
 
 using BizCore.Application.Common.Exceptions;
 using BizCore.Application.Common.Interfaces;
@@ -31,15 +33,8 @@ public class ToggleUserStatusCommandHandler
     {
         // IgnoreQueryFilters because we need to find
         // inactive users too (to reactivate them)
-        var user = await _context.Users
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(
-                u => u.Id == command.UserId &&
-                     u.CompanyId == _currentUser.CompanyId,
-                cancellationToken);
+        return await AccountAccess.Mutate(_context, _currentUser, command.UserId, async (caller, user) => {
 
-        if (user == null)
-            throw new NotFoundException(nameof(User), command.UserId);
 
         // Cannot deactivate yourself
         if (user.Id == _currentUser.UserId)
@@ -47,22 +42,19 @@ public class ToggleUserStatusCommandHandler
                 "You cannot deactivate your own account.");
 
         // Toggle: true → false, false → true
+        if (user.IsActive) await AccountAccess.ProtectLastAdmin(_context, user, cancellationToken);
         user.IsActive = !user.IsActive;
 
         // If deactivating, revoke all their refresh tokens
         // They'll be forced to login again when reactivated
         if (!user.IsActive)
         {
-            var tokens = _context.RefreshTokens
-                .Where(r => r.UserId == user.Id &&
-                            !r.IsRevoked);
-
-            foreach (var token in tokens)
-                token.IsRevoked = true;
+            await AccountAccess.RevokeSessions(_context, user, cancellationToken);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
 
         return Result<bool>.Success(user.IsActive);
+        }, cancellationToken);
     }
 }

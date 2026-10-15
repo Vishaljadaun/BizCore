@@ -55,9 +55,9 @@ test('company onboarding, mobile employee attendance and immediate access revoca
     await page.getByLabel('Set Password', { exact: true }).fill(password);
     await page.getByLabel('Confirm Password', { exact: true }).fill(password);
     await page.getByRole('button', { name: 'Give Access', exact: true }).click();
-    await expect(row.getByText('Has Access', { exact: true })).toBeVisible();
+    await expect(row.getByText('Account linked', { exact: true })).toBeVisible();
     await page.reload();
-    await expect(row.getByText('Has Access', { exact: true })).toBeVisible();
+    await expect(row.getByText('Account linked', { exact: true })).toBeVisible();
   });
 
   // A separate browser context gives the employee their own cookies/localStorage.
@@ -182,7 +182,7 @@ test('company onboarding, mobile employee attendance and immediate access revoca
       const row = page.getByRole('row').filter({ hasText: employeeEmail });
       page.once('dialog', dialog => dialog.accept());
       await row.getByRole('button', { name: 'Revoke', exact: true }).click();
-      await expect(row.getByText('No Access', { exact: true })).toBeVisible();
+      await expect(row.getByText('No account linked', { exact: true })).toBeVisible();
       await employeePage.reload();
       await expect(employeePage.getByRole('heading', { name: 'No Employee Profile Linked' })).toBeVisible();
       const token = await employeePage.evaluate(() =>

@@ -1,4 +1,6 @@
-﻿namespace BizCore.Application.HR.Departments;
+using BizCore.Application.Security;
+using BizCore.Application.Common.Exceptions;
+namespace BizCore.Application.HR.Departments;
 
 using BizCore.Application.Common.Interfaces;
 using BizCore.Application.Common.Models;
@@ -68,7 +70,7 @@ public class GetDepartmentsQueryHandler
                 _context.Employees
                     .IgnoreQueryFilters()
                     .Count(e => e.DepartmentId == d.Id
-                        && e.IsActive),
+                        && e.CompanyId == d.CompanyId && e.IsActive),
                 d.IsActive,
                 d.CreatedAt
             ))
@@ -114,6 +116,8 @@ public class UpdateDepartmentCommandHandler
         UpdateDepartmentCommand command,
         CancellationToken cancellationToken)
     {
+        var companyId = _currentUser.CompanyId ?? throw new ForbiddenAccessException("Company context required.");
+        return await _context.WithEmployeeLockAsync(companyId, async () => {
         var dept = await _context.Departments
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(d =>
@@ -125,6 +129,13 @@ public class UpdateDepartmentCommandHandler
             throw new Common.Exceptions.NotFoundException(
                 "Department", command.DepartmentId);
 
+        await AccountAccess.Caller(_context, _currentUser, cancellationToken, admin: true);
+        if (string.IsNullOrWhiteSpace(command.Name) || command.Name.Trim().Length > 100 || command.Description?.Length > 500)
+            throw new ValidationException("department", "Enter a name of 1–100 characters and a description up to 500 characters.");
+        if (await _context.Departments.IgnoreQueryFilters().AnyAsync(x => x.CompanyId == dept.CompanyId && x.Id != dept.Id && x.Name.ToLower() == command.Name.Trim().ToLower(), cancellationToken))
+            throw new ConflictException("Department with this name already exists.");
+        if (command.ManagerId.HasValue && !await _context.Employees.IgnoreQueryFilters().AnyAsync(x => x.Id == command.ManagerId && x.CompanyId == dept.CompanyId && x.IsActive, cancellationToken))
+            throw new ValidationException("managerId", "Choose an active employee in your company.");
         dept.Name = command.Name.Trim();
         dept.Description = command.Description?.Trim();
         dept.ManagerId = command.ManagerId;
@@ -137,5 +148,6 @@ public class UpdateDepartmentCommandHandler
                 dept.ManagerId, null, 0,
                 dept.IsActive, dept.CreatedAt
             ));
+        }, cancellationToken);
     }
 }

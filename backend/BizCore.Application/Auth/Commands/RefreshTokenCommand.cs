@@ -40,6 +40,7 @@ public class RefreshTokenCommandHandler
             return Result<AuthResponse>.Unauthorized(
                 "Invalid access token.");
 
+        return await _context.WithEmployeeLockAsync(userId.Value, async () => {
         // DB mein refresh token dhundo
         var storedToken = await _context.RefreshTokens
             .IgnoreQueryFilters()
@@ -113,9 +114,12 @@ public class RefreshTokenCommandHandler
                     Email: user.Email,
                     Role: user.Role.ToString(),
                     CompanyId: user.CompanyId,
-                    CompanyName: user.Company.Name
+                    CompanyName: user.Company.Name,
+                    CompanyCode: user.Company.Slug,
+                    MustChangePassword: user.MustChangePassword
                 )
             ));
+        }, cancellationToken);
     }
 
     private async Task RevokeAllUserTokens(

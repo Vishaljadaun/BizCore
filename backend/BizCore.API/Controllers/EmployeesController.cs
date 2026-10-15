@@ -20,6 +20,14 @@ public class EmployeesController : ControllerBase
         _mediator = mediator;
     }
 
+    [HttpPut("{id:guid}"), Authorize(Roles = "SuperAdmin,CompanyAdmin")]
+    public async Task<IActionResult> EditEmployee(Guid id, EditEmployeeInput input, [FromServices] EditEmployeeService service, CancellationToken ct)
+    { await service.Edit(id, input, ct); return Ok(new { message = "Employee updated." }); }
+
+    [HttpPut("{id:guid}/status"), Authorize(Roles = "SuperAdmin,CompanyAdmin")]
+    public async Task<IActionResult> EmployeeStatus(Guid id, EmployeeStatusInput input, [FromServices] EditEmployeeService service, CancellationToken ct)
+    { await service.Status(id, input.IsActive, ct); return Ok(new { message = "Employee status updated." }); }
+
     // ── GET api/hr/employees ──────────────────────────
     [HttpGet]
     [Authorize(Roles = "SuperAdmin,CompanyAdmin,Manager")]

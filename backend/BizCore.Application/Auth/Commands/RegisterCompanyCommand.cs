@@ -112,7 +112,8 @@ public class RegisterCompanyCommandHandler
                     Email: user.Email,
                     Role: user.Role.ToString(),
                     CompanyId: company.Id,
-                    CompanyName: company.Name
+                    CompanyName: company.Name,
+                    CompanyCode: company.Slug
                 )
             ), 201);
     }
